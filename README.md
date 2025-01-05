@@ -1,9 +1,9 @@
 # Gemini Cryptography Application
 ![Gemini logo(1)](https://github.com/user-attachments/assets/7dd5799b-6411-4fd8-8e8b-edd2000e2527)
 
-A versatile encryption and encoding tool built with PyQt5, designed for both educational purposes and practical security applications.
+A versatile encryption/decryption and encoding/decoding tool built with PyQt5, designed for both educational purposes and practical security applications.
 
-![Gemini Screen Shot](https://github.com/user-attachments/assets/110a47f7-9a30-4fed-ac4f-219c93f73240)
+![Gemini Screen Shot - light](https://github.com/user-attachments/assets/de5676b0-1c75-4480-9ece-90521523fb21)
 
 
 ## Features
