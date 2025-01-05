@@ -103,7 +103,7 @@ A versatile encryption and encoding tool built with PyQt5, designed for both edu
    ```
 3. Run the application:
    ```bash
-   python gemini.py
+   python gemini.v1.py
    ```
 
 ## Best Practices
@@ -113,8 +113,8 @@ A versatile encryption and encoding tool built with PyQt5, designed for both edu
 - Verify decryption results match expected format
 
 ## Notes
-- The application is designed for educational purposes
+- The application is designed for educational and practical purposes
 - Multiple encryption methods can be chained together
 - Configuration files are themselves encrypted
-- All operations are performed locally# gemini
-cryptography
+- All operations are performed locally
+
