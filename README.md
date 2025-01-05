@@ -93,21 +93,14 @@ A versatile encryption and encoding tool built with PyQt5, designed for both edu
 - Error handling and user feedback
 
 ## Requirements
-- Python 3.x
-- PyQt5
-- pycryptodome
+- Currently, the python script is wrapped in an .exe, so no dependancies needed.
 
 ## Installation
 
-1. Ensure Python 3.x is installed
-2. Install required packages:
-   ```bash
-   pip install PyQt5 pycryptodome
-   ```
-3. Run the application:
-   ```bash
-   python gemini.v1.py
-   ```
+No installation needed, just:
+
+1. Run the application:
+
 
 ## Best Practices
 - Always use strong passwords for AES and ChaCha20
