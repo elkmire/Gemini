@@ -10,10 +10,13 @@ A versatile encryption/decryption and encoding/decoding tool built with PyQt5, d
 
 ### Basic Encryption Methods
 - **Caesar Cipher**: Classic substitution cipher with customizable shift value
+- **Vigenère cipher**: Key-based polyalphabetic substitution.
+- **Atbash cipher**: Reverse, monoalphabetic substitution.
 - **Text Reversal**: Simple text transformation
 - **Morse Code**: Convert text to and from Morse code
 
 ### Encoding Options
+- **Base85**: Standard base85 encoding/decoding
 - **Base64**: Standard base64 encoding/decoding
 - **Base32**: Alternative encoding with a smaller character set
 - **Hexadecimal**: Convert text to/from hexadecimal representation
@@ -93,13 +96,14 @@ A versatile encryption/decryption and encoding/decoding tool built with PyQt5, d
 - Error handling and user feedback
 
 ## Requirements
-- Currently, the python script is wrapped in an .exe, so no dependancies needed.
+- Windows operating system.
+- (the application is a single python script wrapped in an .exe.)
 
 ## Installation
 
 No installation needed, just:
 
-1. Run the application:
+1. Run the application.
 
 
 ## Best Practices
