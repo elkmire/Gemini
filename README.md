@@ -3,7 +3,8 @@
 
 A versatile encryption/decryption and encoding/decoding tool built with PyQt5, designed for both educational purposes and practical security applications.
 
-![Gemini Screen Shot - light](https://github.com/user-attachments/assets/de5676b0-1c75-4480-9ece-90521523fb21)
+![Gemini](https://github.com/user-attachments/assets/2c573ed2-4bff-48e1-9ab5-87f7e6bf297f)
+
 
 
 ## Features
