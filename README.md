@@ -8,23 +8,69 @@ A versatile encryption/decryption and encoding/decoding tool built with PyQt5, d
 
 
 ## Features
+#### Basic Encryption
+1. **Caesar Cipher**
+   - Classical substitution cipher
+   - Customizable shift value (default: 3)
+   - Preserves case and special characters
+   - Suitable for educational purposes
 
-### Basic Encryption Methods
-- **Caesar Cipher**: Classic substitution cipher with customizable shift value
-- **Vigenère cipher**: Key-based polyalphabetic substitution.
-- **Atbash cipher**: Reverse, monoalphabetic substitution.
-- **Text Reversal**: Simple text transformation
-- **Morse Code**: Convert text to and from Morse code
+2. **Vigenère Cipher**
+   - Polyalphabetic substitution cipher
+   - Custom keyword-based encryption
+   - Case-preserving implementation
+   - Enhanced security compared to Caesar cipher
 
-### Encoding Options
-- **Base85**: Standard base85 encoding/decoding
-- **Base64**: Standard base64 encoding/decoding
-- **Base32**: Alternative encoding with a smaller character set
-- **Hexadecimal**: Convert text to/from hexadecimal representation
+3. **Atbash Cipher**
+   - Simple substitution cipher
+   - Reversible encryption (self-reciprocal)
+   - No key required
+   - Preserves case and spacing
 
-### Advanced Encryption
-- **AES-256**: Advanced Encryption Standard with 256-bit key length
-- **ChaCha20-Poly1305**: Modern stream cipher with authentication
+4. **Text Reversal**
+   - Simple string reversal
+   - Maintains all characters
+   - Useful for basic encoding
+
+5. **Morse Code**
+   - Complete implementation of International Morse Code
+   - Supports letters, numbers, and punctuation
+   - Space-separated output
+   - Bidirectional conversion
+
+#### Encoding Methods
+1. **Base85 (ASCII85)**
+   - Efficient binary-to-text encoding
+   - Higher density than Base64
+   - Suitable for technical applications
+
+2. **Base64**
+   - Standard binary-to-text encoding
+   - Widely compatible
+   - URL-safe implementation
+
+3. **Base32**
+   - Alternative binary-to-text encoding
+   - Case-insensitive
+   - Suitable for case-sensitive systems
+
+4. **Hexadecimal**
+   - Binary-to-hex conversion
+   - Two-character representation per byte
+   - Technical and debugging applications
+
+#### Advanced Encryption
+1. **AES-256**
+   - Industry-standard encryption
+   - 256-bit key strength
+   - Password-based key derivation (PBKDF2)
+   - Secure for sensitive data
+
+2. **ChaCha20-Poly1305**
+   - Modern stream cipher
+   - High-performance encryption
+   - Built-in authentication
+   - Suitable for high-security applications
 
 ## Usage
 
@@ -48,6 +94,17 @@ A versatile encryption/decryption and encoding/decoding tool built with PyQt5, d
 - Character counter showing output length
 - Copy button for easy clipboard access
 
+### Token Management
+- **Generate Token (Encrypt Mode)**
+  - Creates a text file of encrypted content
+  - Choose save location
+  - Automatic .txt extension
+
+- **Import Token (Decrypt Mode)**
+  - Load generated token
+  - Automatic content loading
+  - Immediate decryption with selected methods
+
 ### Workflow
 
 1. **Basic Usage**:
@@ -70,6 +127,17 @@ A versatile encryption/decryption and encoding/decoding tool built with PyQt5, d
 - Dark/Light mode toggle in View menu
 - Adjustable font sizes (Increase/Decrease options)
 - Keyboard shortcuts for font size adjustment
+
+## Keyboard Shortcuts
+
+### Mode Control
+- Ctrl+E: Switch to Encrypt mode
+- Ctrl+R: Switch to Decrypt mode
+
+### View Control
+- Ctrl+D: Toggle Dark Mode
+- Ctrl+0: Increase Font Size
+- Ctrl+9: Decrease Font Size
 
 ## Help and Documentation
 - Built-in encryption guide accessible via Help menu
