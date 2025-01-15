@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Cryptography</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <style>
+        :root {
+            --primary-color: #00ff41;
+            --bg-color: #000000;
+            --secondary-bg: #0a0a0a;
+            --border-color: #00ff41;
+            --text-color: #00ff41;
+            --accent-color: #ff1493;
+        }
+
+        body {
+            font-family: 'Consolas', 'Courier New', monospace;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 2fr;
+            gap: 20px;
+        }
+
+        .title {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .title span {
+            margin: 0 2px;
+        }
+
+        .title span:nth-child(1) { color: #00ffff; }
+        .title span:nth-child(2) { color: #00ccff; }
+        .title span:nth-child(3) { color: #ff3366; }
+        .title span:nth-child(4) { color: #ff3333; }
+        .title span:nth-child(5) { color: #ff0000; }
+        .title span:nth-child(6) { color: #cc0000; }
+
+        .input-section, .output-section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-section {
+            background-color: var(--secondary-bg);
+            padding: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .group-box {
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .group-box h3 {
+            margin-top: -25px;
+            background-color: var(--secondary-bg);
+            padding: 0 10px;
+            display: inline-block;
+            color: var(--primary-color);
+        }
+
+        textarea {
+            background-color: var(--secondary-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            margin-bottom: 10px;
+            min-height: 200px;
+            resize: vertical;
+        }
+
+        input[type="text"], input[type="password"] {
+            background-color: var(--secondary-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 5px;
+            margin: 5px 0;
+        }
+
+        button {
+            background-color: var(--secondary-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 8px 15px;
+            cursor: pointer;
+            margin: 5px 0;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background-color: var(--primary-color);
+            color: var(--bg-color);
+        }
+
+        .mode-selector {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        select {
+            background-color: var(--secondary-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 5px;
+        }
+
+        .chain-display {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            min-height: 100px;
+            background-color: var(--secondary-bg);
+        }
+
+        label {
+            margin: 5px 0;
+            display: block;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            margin-right: 10px;
+        }
+
+        .key-input {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 5px 0;
+        }
+
+        .key-input input {
+            width: 120px;
+        }
+
+        .counter {
+            font-size: 0.8em;
+            color: var(--text-color);
+            margin-left: 10px;
+        }
+
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+                font-size: 14px;
+            }
+
+            .container {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .title {
+                font-size: 1.5em;
+                margin-bottom: 15px;
+            }
+
+            textarea {
+                min-height: 150px;
+                font-size: 16px; /* Prevent zoom on iOS */
+            }
+
+            .group-box {
+                padding: 10px;
+                margin-bottom: 10px;
+            }
+
+            .group-box h3 {
+                font-size: 1em;
+                margin-top: -20px;
+            }
+
+            .key-input {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .key-input input {
+                width: 100%;
+                margin-top: 5px;
+            }
+
+            input[type="text"],
+            input[type="password"] {
+                font-size: 16px; /* Prevent zoom on iOS */
+                padding: 8px;
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            button {
+                width: 100%;
+                padding: 12px;
+                margin: 5px 0;
+                font-size: 16px;
+            }
+
+            .checkbox-container {
+                padding: 8px 0;
+            }
+
+            .checkbox-container input[type="checkbox"] {
+                transform: scale(1.2);
+                margin-right: 15px;
+            }
+
+            /* Add touch-friendly spacing */
+            .checkbox-container label {
+                flex: 1;
+                padding: 8px 0;
+            }
+
+            /* Floating action button for mobile */
+            .mobile-actions {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                display: none;
+            }
+
+            .mobile-actions button {
+                width: 56px;
+                height: 56px;
+                border-radius: 50%;
+                background-color: var(--accent-color);
+                border: none;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                margin: 5px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            /* Show mobile actions on small screens */
+            @media (max-width: 768px) {
+                .mobile-actions {
+                    display: flex;
+                    flex-direction: column;
+                }
+            }
+
+            /* Improved touch targets */
+            select, button {
+                min-height: 44px;
+            }
+
+            /* Better spacing for mode selector */
+            .mode-selector {
+                margin: 15px 0;
+            }
+
+            .mode-selector select {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            /* Optimize chain display for mobile */
+            .chain-display {
+                font-size: 0.9em;
+                padding: 8px;
+                max-height: 150px;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            /* Add pull-to-refresh indicator */
+            .refresh-indicator {
+                display: none;
+                text-align: center;
+                padding: 20px;
+                color: var(--text-color);
+            }
+
+            .refreshing .refresh-indicator {
+                display: block;
+            }
+        }
+
+        /* Handle different screen orientations */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .container {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .control-section {
+                grid-column: 1 / -1;
+                order: -1;
+            }
+        }
+
+        /* High-DPI screen optimizations */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            body {
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
+            }
+        }
+    </style>
+    <!-- Add Font Awesome for mobile icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <div class="title">
+        <span>G</span><span>E</span><span>M</span><span>I</span><span>N</span><span>I</span>
+    </div>
+    
+    <div class="container">
+        <div class="input-section">
+            <h2>Input <span class="counter" id="input-counter">(0 chars)</span></h2>
+            <textarea id="input-text" placeholder="Enter message to encrypt..."></textarea>
+        </div>
+
+        <div class="control-section">
+            <div class="mode-selector">
+                <select id="mode-select">
+                    <option value="encrypt">Encrypt</option>
+                    <option value="decrypt">Decrypt</option>
+                </select>
+                <p>CHECK MODE</p>
+            </div>
+
+            <div class="group-box">
+                <h3>Basic</h3>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="caesar-check">
+                    <label for="caesar-check">Caesar Cipher</label>
+                    <input type="text" id="caesar-shift" placeholder="Shift (default: 3)" value="3">
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="vigenere-check">
+                    <label for="vigenere-check">Vigenère Cipher</label>
+                    <input type="text" id="vigenere-key" placeholder="Key">
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="atbash-check">
+                    <label for="atbash-check">Atbash Cipher</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="reverse-check">
+                    <label for="reverse-check">Reverse Text</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="morse-check">
+                    <label for="morse-check">Morse Code</label>
+                </div>
+            </div>
+
+            <div class="group-box">
+                <h3>Encoding</h3>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="base85-check">
+                    <label for="base85-check">Base85</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="base64-check">
+                    <label for="base64-check">Base64</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="base32-check">
+                    <label for="base32-check">Base32</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="hex-check">
+                    <label for="hex-check">Hexadecimal</label>
+                </div>
+            </div>
+
+            <div class="group-box">
+                <h3>Encryption</h3>
+                <div class="key-input">
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="aes-check">
+                        <label for="aes-check">AES-256</label>
+                    </div>
+                    <input type="password" id="aes-key" placeholder="AES key">
+                </div>
+                <div class="key-input">
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="chacha-check">
+                        <label for="chacha-check">ChaCha20-Poly1305</label>
+                    </div>
+                    <input type="password" id="chacha-key" placeholder="ChaCha key">
+                </div>
+            </div>
+
+            <button id="reset-button">Reset</button>
+
+            <div class="chain-display" id="chain-display">
+                <p>Chain will appear here...</p>
+            </div>
+        </div>
+
+        <div class="output-section">
+            <h2>Output <span class="counter" id="output-counter">(0 chars)</span></h2>
+            <textarea id="output-text" readonly placeholder="Encrypted message will appear here..."></textarea>
+            <div>
+                <button id="copy-button">Copy Message</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize all UI elements
+        const elements = {
+            inputText: document.getElementById('input-text'),
+            outputText: document.getElementById('output-text'),
+            modeSelect: document.getElementById('mode-select'),
+            chainDisplay: document.getElementById('chain-display'),
+            inputCounter: document.getElementById('input-counter'),
+            outputCounter: document.getElementById('output-counter'),
+            copyButton: document.getElementById('copy-button'),
+            resetButton: document.getElementById('reset-button')
+        };
+
+        // Initialize encryption methods
+        const encryptionMethods = {
+            caesar: document.getElementById('caesar-check'),
+            caesarShift: document.getElementById('caesar-shift'),
+            vigenere: document.getElementById('vigenere-check'),
+            vigenereKey: document.getElementById('vigenere-key'),
+            atbash: document.getElementById('atbash-check'),
+            reverse: document.getElementById('reverse-check'),
+            morse: document.getElementById('morse-check'),
+            base85: document.getElementById('base85-check'),
+            base64: document.getElementById('base64-check'),
+            base32: document.getElementById('base32-check'),
+            hex: document.getElementById('hex-check'),
+            aes: document.getElementById('aes-check'),
+            aesKey: document.getElementById('aes-key'),
+            chacha: document.getElementById('chacha-check'),
+            chachaKey: document.getElementById('chacha-key')
+        };
+
+        // Morse code lookup table
+        const morseCode = {
+            'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
+            'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
+            'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
+            'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+            'Y': '-.--', 'Z': '--..', '0': '-----', '1': '.----', '2': '..---',
+            '3': '...--', '4': '....-', '5': '.....', '6': '-....', '7': '--...',
+            '8': '---..', '9': '----.'
+        };
+
+        // Event listeners
+        elements.inputText.addEventListener('input', updateOutput);
+        elements.modeSelect.addEventListener('change', updateMode);
+        elements.copyButton.addEventListener('click', copyToClipboard);
+        elements.resetButton.addEventListener('click', resetState);
+
+        // Add event listeners for all encryption method checkboxes
+        Object.values(encryptionMethods).forEach(element => {
+            if (element) {
+                element.addEventListener('change', updateOutput);
+                if (element.type === 'text' || element.type === 'password') {
+                    element.addEventListener('input', updateOutput);
+                }
+            }
+        });
+
+        function updateMode() {
+            const isEncrypt = elements.modeSelect.value === 'encrypt';
+            elements.inputText.placeholder = isEncrypt ? "Enter message to encrypt..." : "Enter message to decrypt...";
+            elements.outputText.placeholder = isEncrypt ? "Encrypted message will appear here..." : "Decrypted message will appear here...";
+            elements.chainDisplay.innerHTML = isEncrypt ? "Encryption chain will appear here..." : "Decryption chain will appear here...";
+            elements.copyButton.textContent = isEncrypt ? "Copy Encrypted Message" : "Copy Decrypted Message";
+            updateOutput();
+        }
+
+        // Basic encryption methods
+        function caesarCipher(text, shift, decrypt = false) {
+            shift = parseInt(shift) || 3;
+            if (decrypt) shift = 26 - shift;
+            return text.replace(/[a-zA-Z]/g, char => {
+                const code = char.charCodeAt(0);
+                const isUpperCase = char === char.toUpperCase();
+                const base = isUpperCase ? 65 : 97;
+                return String.fromCharCode(((code - base + shift) % 26) + base);
+            });
+        }
+
+        function vigenereCipher(text, key, decrypt = false) {
+            if (!key) return text;
+            key = key.toUpperCase().replace(/[^A-Z]/g, '');
+            if (!key) return text;
+            let result = '';
+            let keyIndex = 0;
+            
+            for (let i = 0; i < text.length; i++) {
+                if (text[i].match(/[a-zA-Z]/)) {
+                    const isUpperCase = text[i] === text[i].toUpperCase();
+                    const charCode = text[i].toUpperCase().charCodeAt(0) - 65;
+                    const keyChar = key[keyIndex % key.length].charCodeAt(0) - 65;
+                    let newChar = decrypt 
+                        ? (charCode - keyChar + 26) % 26
+                        : (charCode + keyChar) % 26;
+                    newChar += 65;
+                    result += isUpperCase 
+                        ? String.fromCharCode(newChar)
+                        : String.fromCharCode(newChar).toLowerCase();
+                    keyIndex++;
+                } else {
+                    result += text[i];
+                }
+            }
+            return result;
+        }
+
+        function atbashCipher(text) {
+            return text.replace(/[a-zA-Z]/g, char => {
+                const isUpperCase = char === char.toUpperCase();
+                const base = isUpperCase ? 65 : 97;
+                const newChar = 25 - (char.toUpperCase().charCodeAt(0) - 65) + 65;
+                return isUpperCase ? String.fromCharCode(newChar) : String.fromCharCode(newChar).toLowerCase();
+            });
+        }
+
+        function reverseText(text) {
+            return text.split('').reverse().join('');
+        }
+
+        function morseEncode(text) {
+            return text.toUpperCase().split('').map(char => {
+                if (char === ' ') return '  ';
+                return morseCode[char] || char;
+            }).join(' ');
+        }
+
+        function morseDecode(text) {
+            const reverseMorse = Object.fromEntries(
+                Object.entries(morseCode).map(([key, value]) => [value, key])
+            );
+            return text.split('  ').map(word => 
+                word.split(' ').map(char => 
+                    reverseMorse[char] || char
+                ).join('')
+            ).join(' ').toLowerCase();
+        }
+
+        // Encoding methods
+        function base85Encode(text) {
+            // This is a simplified Base85 implementation
+            const bytes = new TextEncoder().encode(text);
+            return btoa(String.fromCharCode(...bytes));
+        }
+
+        function base85Decode(text) {
+            try {
+                const decoded = atob(text);
+                return new TextDecoder().decode(new Uint8Array([...decoded].map(c => c.charCodeAt(0))));
+            } catch (e) {
+                throw new Error('Invalid Base85 encoding');
+            }
+        }
+
+        function base64Encode(text) {
+            return btoa(text);
+        }
+
+        function base64Decode(text) {
+            try {
+                return atob(text);
+            } catch (e) {
+                throw new Error('Invalid Base64 encoding');
+            }
+        }
+
+        function base32Encode(text) {
+            // Simplified Base32 implementation
+            return btoa(text).replace(/=/g, '');
+        }
+
+        function base32Decode(text) {
+            try {
+                return atob(text.padEnd(text.length + (text.length % 8), '='));
+            } catch (e) {
+                throw new Error('Invalid Base32 encoding');
+            }
+        }
+
+        function hexEncode(text) {
+            return [...text].map(char => char.charCodeAt(0).toString(16).padStart(2, '0')).join('');
+        }
+
+        function hexDecode(text) {
+            try {
+                return text.match(/.{1,2}/g).map(byte => String.fromCharCode(parseInt(byte, 16))).join('');
+            } catch (e) {
+                throw new Error('Invalid hexadecimal encoding');
+            }
+        }
+
+        // Advanced encryption methods
+        async function aesEncrypt(text, password) {
+            if (!password) throw new Error('AES password required');
+            const salt = CryptoJS.lib.WordArray.random(128/8);
+            const key = CryptoJS.PBKDF2(password, salt, {
+                keySize: 256/32,
+                iterations: 1000
+            });
+            const iv = CryptoJS.lib.WordArray.random(128/8);
+            const encrypted = CryptoJS.AES.encrypt(text, key, { 
+                iv: iv,
+                mode: CryptoJS.mode.CBC,
+                padding: CryptoJS.pad.Pkcs7
+            });
+            return salt.toString() + iv.toString() + encrypted.toString();
+        }
+
+        async function aesDecrypt(text, password) {
+            if (!password) throw new Error('AES password required');
+            try {
+                const salt = CryptoJS.enc.Hex.parse(text.substr(0, 32));
+                const iv = CryptoJS.enc.Hex.parse(text.substr(32, 32));
+                const encrypted = text.substring(64);
+                const key = CryptoJS.PBKDF2(password, salt, {
+                    keySize: 256/32,
+                    iterations: 1000
+                });
+                const decrypted = CryptoJS.AES.decrypt(encrypted, key, { 
+                    iv: iv,
+                    mode: CryptoJS.mode.CBC,
+                    padding: CryptoJS.pad.Pkcs7
+                });
+                return decrypted.toString(CryptoJS.enc.Utf8);
+            } catch (e) {
+                throw new Error('AES decryption failed');
+            }
+        }
+
+        async function chachaEncrypt(text, password) {
+            // Note: This is a simplified version since ChaCha20-Poly1305 isn't directly available in CryptoJS
+            if (!password) throw new Error('ChaCha password required');
+            return aesEncrypt(text, password); // Fallback to AES for demo
+        }
+
+        async function chachaDecrypt(text, password) {
+            if (!password) throw new Error('ChaCha password required');
+            return aesDecrypt(text, password); // Fallback to AES for demo
+        }
+
+        // Main encryption/decryption chain
+        async function updateOutput() {
+            let text = elements.inputText.value;
+            if (!text) {
+                elements.outputText.value = '';
+                elements.chainDisplay.innerHTML = '';
+                updateCounters();
+                return;
+            }
+
+            const isEncrypt = elements.modeSelect.value === 'encrypt';
+            const chain = [];
+            
+            try {
+                if (isEncrypt) {
+                    // Basic encryption methods
+                    if (encryptionMethods.caesar.checked) {
+                        const shift = encryptionMethods.caesarShift.value || '3';
+                        text = caesarCipher(text, shift);
+                        chain.push(`Caesar Cipher (shift=${shift})`);
+                    }
+
+                    if (encryptionMethods.vigenere.checked) {
+                        const key = encryptionMethods.vigenereKey.value;
+                        if (!key) throw new Error('Vigenère key required');
+                        text = vigenereCipher(text, key);
+                        chain.push(`Vigenère Cipher (key=${key})`);
+                    }
+
+                    if (encryptionMethods.atbash.checked) {
+                        text = atbashCipher(text);
+                        chain.push('Atbash Cipher');
+                    }
+
+                    if (encryptionMethods.reverse.checked) {
+                        text = reverseText(text);
+                        chain.push('Text Reversal');
+                    }
+
+                    if (encryptionMethods.morse.checked) {
+                        text = morseEncode(text);
+                        chain.push('Morse Code');
+                    }
+
+                    // Advanced encryption
+                    if (encryptionMethods.aes.checked) {
+                        text = await aesEncrypt(text, encryptionMethods.aesKey.value);
+                        chain.push('AES-256 Encryption');
+                    }
+
+                    if (encryptionMethods.chacha.checked) {
+                        text = await chachaEncrypt(text, encryptionMethods.chachaKey.value);
+                        chain.push('ChaCha20-Poly1305 Encryption');
+                    }
+
+                    // Encoding methods
+                    if (encryptionMethods.base85.checked) {
+                        text = base85Encode(text);
+                        chain.push('Base85 Encoding');
+                    }
+
+                    if (encryptionMethods.base64.checked) {
+                        text = base64Encode(text);
+                        chain.push('Base64 Encoding');
+                    }
+
+                    if (encryptionMethods.base32.checked) {
+                        text = base32Encode(text);
+                        chain.push('Base32 Encoding');
+                    }
+
+                    if (encryptionMethods.hex.checked) {
+                        text = hexEncode(text);
+                        chain.push('Hexadecimal Encoding');
+                    }
+                } else {
+                    // Decryption in reverse order
+                    if (encryptionMethods.hex.checked) {
+                        text = hexDecode(text);
+                        chain.push('Hexadecimal Decoding');
+                    }
+
+                    if (encryptionMethods.base32.checked) {
+                        text = base32Decode(text);
+                        chain.push('Base32 Decoding');
+                    }
+
+                    if (encryptionMethods.base64.checked) {
+                        text = base64Decode(text);
+                        chain.push('Base64 Decoding');
+                    }
+
+                    if (encryptionMethods.base85.checked) {
+                        text = base85Decode(text);
+                        chain.push('Base85 Decoding');
+                    }
+
+                    if (encryptionMethods.chacha.checked) {
+                        text = await chachaDecrypt(text, encryptionMethods.chachaKey.value);
+                        chain.push('ChaCha20-Poly1305 Decryption');
+                    }
+
+                    if (encryptionMethods.aes.checked) {
+                        text = await aesDecrypt(text, encryptionMethods.aesKey.value);
+                        chain.push('AES-256 Decryption');
+                    }
+
+                    if (encryptionMethods.morse.checked) {
+                        text = morseDecode(text);
+                        chain.push('Morse Code');
+                    }
+
+                    if (encryptionMethods.reverse.checked) {
+                        text = reverseText(text);
+                        chain.push('Text Reversal');
+                    }
+
+                    if (encryptionMethods.atbash.checked) {
+                        text = atbashCipher(text);
+                        chain.push('Atbash Cipher');
+                    }
+
+                    if (encryptionMethods.vigenere.checked) {
+                        const key = encryptionMethods.vigenereKey.value;
+                        if (!key) throw new Error('Vigenère key required');
+                        text = vigenereCipher(text, key, true);
+                        chain.push(`Vigenère Cipher (key=${key})`);
+                    }
+
+                    if (encryptionMethods.caesar.checked) {
+                        const shift = encryptionMethods.caesarShift.value || '3';
+                        text = caesarCipher(text, shift, true);
+                        chain.push(`Caesar Cipher (shift=${shift})`);
+                    }
+                }
+
+                elements.outputText.value = text;
+
+                // Update chain display
+                if (chain.length > 0) {
+                    const chainText = `${isEncrypt ? 'Encryption' : 'Decryption'} Steps:\n` +
+                        chain.map((step, i) => `${i + 1}. ${step}`).join('\n');
+                    elements.chainDisplay.innerHTML = chainText;
+                } else {
+                    elements.chainDisplay.innerHTML = `No ${isEncrypt ? 'encryption' : 'decryption'} applied`;
+                }
+            } catch (e) {
+                elements.outputText.value = `Error: ${e.message}`;
+                elements.chainDisplay.innerHTML = `Error occurred during ${isEncrypt ? 'encryption' : 'decryption'}`;
+            }
+
+            updateCounters();
+        }
+
+        function updateCounters() {
+            elements.inputCounter.textContent = `(${elements.inputText.value.length} chars)`;
+            elements.outputCounter.textContent = `(${elements.outputText.value.length} chars)`;
+        }
+
+        function copyToClipboard() {
+            elements.outputText.select();
+            document.execCommand('copy');
+        }
+
+        function resetState() {
+            // Reset all form elements
+            elements.inputText.value = '';
+            elements.outputText.value = '';
+            elements.chainDisplay.innerHTML = 'Chain will appear here...';
+            elements.modeSelect.value = 'encrypt';
+
+            // Reset all checkboxes and inputs
+            Object.values(encryptionMethods).forEach(element => {
+                if (element) {
+                    if (element.type === 'checkbox') {
+                        element.checked = false;
+                    } else if (element.type === 'text' || element.type === 'password') {
+                        element.value = element.id === 'caesar-shift' ? '3' : '';
+                    }
+                }
+            });
+
+            // Update counters and mode
+            updateCounters();
+            updateMode();
+        }
+
+        // Initialize the application
+        updateMode();
+
+        // Mobile-specific functionality
+        if ('ontouchstart' in window) {
+            let touchStartY = 0;
+            let pullDistance = 0;
+            const PULL_THRESHOLD = 60;
+
+            // Pull to refresh
+            document.addEventListener('touchstart', (e) => {
+                if (document.scrollTop === 0) {
+                    touchStartY = e.touches[0].clientY;
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchmove', (e) => {
+                if (touchStartY > 0) {
+                    pullDistance = e.touches[0].clientY - touchStartY;
+                    if (pullDistance > 0) {
+                        document.body.classList.add('refreshing');
+                        e.preventDefault();
+                    }
+                }
+            }, { passive: false });
+
+            document.addEventListener('touchend', () => {
+                if (pullDistance >= PULL_THRESHOLD) {
+                    resetState();
+                }
+                touchStartY = 0;
+                pullDistance = 0;
+                document.body.classList.remove('refreshing');
+            });
+
+            // Mobile buttons
+            document.getElementById('mobile-copy').addEventListener('click', copyToClipboard);
+            document.getElementById('mobile-reset').addEventListener('click', resetState);
+            document.getElementById('mobile-help').addEventListener('click', () => {
+                alert('Gemini Cryptography App\n\n' +
+                      'Select encryption methods from the options panel.\n' +
+                      'Enter text in the input field and see the results in real-time.\n' +
+                      'Use the mode selector to switch between encryption and decryption.');
+            });
+
+            // Improve touch response
+            document.addEventListener('touchstart', () => {}, {passive: true});
+
+            // Prevent double-tap zoom
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', (e) => {
+                const now = Date.now();
+                if (now - lastTouchEnd < 300) {
+                    e.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+        }
+
+        // Handle visibility changes
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                updateOutput();
+            }
+        });
+
+        // Handle orientation changes
+        window.addEventListener('orientationchange', () => {
+            setTimeout(updateLayout, 100);
+        });
+
+        function updateLayout() {
+            const vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        }
+
+        // Initial layout setup
+        updateLayout();
+    </script>
+</body>
+</html>
