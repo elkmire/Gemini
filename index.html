@@ -179,6 +179,79 @@ label {
     margin-left: 10px;
 }
 
+.config-buttons {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    gap: 10px;
+}
+
+.config-buttons button {
+    background-color: var(--secondary-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+    flex: 1;
+}
+
+.config-buttons button:hover {
+    background-color: var(--primary-color);
+    color: var(--bg-color);
+}
+
+.config-buttons p {
+    margin: 0;
+    white-space: nowrap;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+}
+
+.modal-content {
+    position: relative;
+    background-color: var(--secondary-bg);
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    width: 80%;
+    max-width: 500px;
+}
+
+.modal h2 {
+    margin-top: 0;
+    color: var(--text-color);
+}
+
+.modal input {
+    width: 100%;
+    margin: 10px 0;
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+.modal .error {
+    color: var(--accent-color);
+    margin: 10px 0;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
 /* Mobile Optimizations */
 @media (max-width: 768px) {
     /* Base typography */
@@ -391,7 +464,11 @@ label {
                     <option value="encrypt">Encrypt</option>
                     <option value="decrypt">Decrypt</option>
                 </select>
-                <p>CHECK MODE</p>
+                <div class="config-buttons">
+                    <button id="load-config">Load Config</button>
+                    <p>CHECK MODE</p>
+                    <button id="save-config">Save Config</button>
+                </div>
             </div>
 
             <div class="group-box">
@@ -470,6 +547,33 @@ label {
             <textarea id="output-text" readonly placeholder="Encrypted message will appear here..."></textarea>
             <div>
                 <button id="copy-button">Copy Message</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="save-modal" class="modal">
+        <div class="modal-content">
+            <h2>Save Configuration</h2>
+            <p>Enter a password to encrypt your configuration</p>
+            <input type="password" id="save-password" placeholder="Enter password">
+            <div id="save-error" class="error"></div>
+            <div class="modal-buttons">
+                <button id="save-cancel">Cancel</button>
+                <button id="save-confirm">Save</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="load-modal" class="modal">
+        <div class="modal-content">
+            <h2>Load Configuration</h2>
+            <p>Select a configuration file and enter the password</p>
+            <input type="password" id="load-password" placeholder="Enter password">
+            <input type="file" id="config-file" accept=".txt">
+            <div id="load-error" class="error"></div>
+            <div class="modal-buttons">
+                <button id="load-cancel">Cancel</button>
+                <button id="load-confirm">Load</button>
             </div>
         </div>
     </div>
@@ -900,6 +1004,193 @@ label {
             updateCounters();
             updateMode();
         }
+
+// Configuration management functions
+function getCurrentConfig() {
+    return {
+        mode: elements.modeSelect.value,
+        caesar: {
+            enabled: encryptionMethods.caesar.checked,
+            shift: encryptionMethods.caesarShift.value
+        },
+        vigenere: {
+            enabled: encryptionMethods.vigenere.checked,
+            key: encryptionMethods.vigenereKey.value
+        },
+        atbash: encryptionMethods.atbash.checked,
+        reverse: encryptionMethods.reverse.checked,
+        morse: encryptionMethods.morse.checked,
+        base85: encryptionMethods.base85.checked,
+        base64: encryptionMethods.base64.checked,
+        base32: encryptionMethods.base32.checked,
+        hex: encryptionMethods.hex.checked,
+        aes: {
+            enabled: encryptionMethods.aes.checked,
+            key: encryptionMethods.aesKey.value
+        },
+        chacha: {
+            enabled: encryptionMethods.chacha.checked,
+            key: encryptionMethods.chachaKey.value
+        }
+    };
+}
+
+function applyConfig(config) {
+    elements.modeSelect.value = config.mode;
+    
+    encryptionMethods.caesar.checked = config.caesar.enabled;
+    encryptionMethods.caesarShift.value = config.caesar.shift;
+    
+    encryptionMethods.vigenere.checked = config.vigenere.enabled;
+    encryptionMethods.vigenereKey.value = config.vigenere.key;
+    
+    encryptionMethods.atbash.checked = config.atbash;
+    encryptionMethods.reverse.checked = config.reverse;
+    encryptionMethods.morse.checked = config.morse;
+    encryptionMethods.base85.checked = config.base85;
+    encryptionMethods.base64.checked = config.base64;
+    encryptionMethods.base32.checked = config.base32;
+    encryptionMethods.hex.checked = config.hex;
+    
+    encryptionMethods.aes.checked = config.aes.enabled;
+    encryptionMethods.aesKey.value = config.aes.key;
+    
+    encryptionMethods.chacha.checked = config.chacha.enabled;
+    encryptionMethods.chachaKey.value = config.chacha.key;
+
+    elements.modeSelect.dispatchEvent(new Event('change'));
+}
+
+async function encryptConfig(config, password) {
+    const text = JSON.stringify(config);
+    const salt = CryptoJS.lib.WordArray.random(128/8);
+    const key = CryptoJS.PBKDF2(password, salt, {
+        keySize: 256/32,
+        iterations: 1000
+    });
+    const iv = CryptoJS.lib.WordArray.random(128/8);
+    const encrypted = CryptoJS.AES.encrypt(text, key, { 
+        iv: iv,
+        mode: CryptoJS.mode.CBC,
+        padding: CryptoJS.pad.Pkcs7
+    });
+    return salt.toString() + iv.toString() + encrypted.toString();
+}
+
+async function decryptConfig(encryptedText, password) {
+    try {
+        const salt = CryptoJS.enc.Hex.parse(encryptedText.substr(0, 32));
+        const iv = CryptoJS.enc.Hex.parse(encryptedText.substr(32, 32));
+        const encrypted = encryptedText.substring(64);
+        const key = CryptoJS.PBKDF2(password, salt, {
+            keySize: 256/32,
+            iterations: 1000
+        });
+        const decrypted = CryptoJS.AES.decrypt(encrypted, key, { 
+            iv: iv,
+            mode: CryptoJS.mode.CBC,
+            padding: CryptoJS.pad.Pkcs7
+        });
+        return JSON.parse(decrypted.toString(CryptoJS.enc.Utf8));
+    } catch (e) {
+        throw new Error('Invalid password or corrupted configuration file');
+    }
+}
+
+// Modal management
+const saveModal = document.getElementById('save-modal');
+const loadModal = document.getElementById('load-modal');
+const savePassword = document.getElementById('save-password');
+const loadPassword = document.getElementById('load-password');
+const configFile = document.getElementById('config-file');
+const saveError = document.getElementById('save-error');
+const loadError = document.getElementById('load-error');
+
+document.getElementById('save-config').addEventListener('click', () => {
+    saveModal.style.display = 'block';
+    savePassword.value = '';
+    saveError.textContent = '';
+});
+
+document.getElementById('load-config').addEventListener('click', () => {
+    loadModal.style.display = 'block';
+    loadPassword.value = '';
+    configFile.value = '';
+    loadError.textContent = '';
+});
+
+document.getElementById('save-cancel').addEventListener('click', () => {
+    saveModal.style.display = 'none';
+});
+
+document.getElementById('load-cancel').addEventListener('click', () => {
+    loadModal.style.display = 'none';
+});
+
+document.getElementById('save-confirm').addEventListener('click', async () => {
+    try {
+        if (!savePassword.value) {
+            saveError.textContent = 'Password is required';
+            return;
+        }
+
+        const config = getCurrentConfig();
+        const encryptedConfig = await encryptConfig(config, savePassword.value);
+        
+        const blob = new Blob([encryptedConfig], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'gemini-config.txt';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        saveModal.style.display = 'none';
+    } catch (err) {
+        saveError.textContent = err.message;
+    }
+});
+
+document.getElementById('load-confirm').addEventListener('click', async () => {
+    try {
+        const file = configFile.files[0];
+        if (!file) {
+            loadError.textContent = 'Please select a file';
+            return;
+        }
+        if (!loadPassword.value) {
+            loadError.textContent = 'Password is required';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const encryptedText = e.target.result;
+                const config = await decryptConfig(encryptedText, loadPassword.value);
+                applyConfig(config);
+                loadModal.style.display = 'none';
+            } catch (err) {
+                loadError.textContent = err.message;
+            }
+        };
+        reader.readAsText(file);
+    } catch (err) {
+        loadError.textContent = err.message;
+    }
+});
+
+// Close modals when clicking outside
+window.addEventListener('click', (event) => {
+    if (event.target === saveModal) {
+        saveModal.style.display = 'none';
+    }
+    if (event.target === loadModal) {
+        loadModal.style.display = 'none';
+    }
+});
 
         // Initialize the application
         updateMode();
