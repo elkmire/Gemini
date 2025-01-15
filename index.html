@@ -18,6 +18,8 @@
     --border-color: #00ff41;
     --text-color: #00ff41;
     --accent-color: #ff1493;
+    --checkbox-size: 18px;
+    --checkbox-border: 2px;
 }
 
 body {
@@ -65,20 +67,107 @@ body {
     border: 1px solid var(--border-color);
 }
 
+/* Updated Group Box Styles */
 .group-box {
     border: 1px solid var(--border-color);
     padding: 15px;
     margin-bottom: 15px;
+    position: relative;
+    padding-top: 35px;
 }
 
 .group-box h3 {
-    margin-top: -25px;
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
     background-color: var(--secondary-bg);
-    padding: 0 10px;
+    padding: 0 20px;
     display: inline-block;
     color: var(--primary-color);
+    font-size: 1.4em;
+    text-align: center;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    transition: all 0.3s ease;
 }
 
+.group-box h3:hover {
+    color: var(--accent-color);
+    text-shadow: 0 0 5px var(--accent-color);
+}
+
+/* Updated Checkbox Container Styles */
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 8px 0;
+    padding: 4px 0;
+    position: relative;
+}
+
+/* Custom Checkbox Styling */
+.checkbox-container input[type="checkbox"] {
+    opacity: 0;
+    position: absolute;
+    width: var(--checkbox-size);
+    height: var(--checkbox-size);
+    margin: 0;
+    cursor: pointer;
+}
+
+.checkbox-container label {
+    position: relative;
+    padding-left: calc(var(--checkbox-size) + 10px);
+    cursor: pointer;
+    display: inline-block;
+    text-align: center;
+    margin: 0;
+    flex: 1;
+}
+
+.checkbox-container label::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: var(--checkbox-size);
+    height: var(--checkbox-size);
+    border: var(--checkbox-border) solid var(--border-color);
+    background: var(--secondary-bg);
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+}
+
+.checkbox-container label::after {
+    content: '';
+    position: absolute;
+    left: calc(var(--checkbox-size) / 4);
+    top: 50%;
+    transform: translateY(-50%) scale(0);
+    width: calc(var(--checkbox-size) / 2);
+    height: calc(var(--checkbox-size) / 2);
+    background: var(--primary-color);
+    transition: all 0.2s ease;
+    box-shadow: 0 0 5px var(--primary-color);
+}
+
+.checkbox-container input[type="checkbox"]:checked + label::before {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 5px var(--primary-color);
+}
+
+.checkbox-container input[type="checkbox"]:checked + label::after {
+    transform: translateY(-50%) scale(1);
+}
+
+/* Input Styles */
 textarea {
     background-color: var(--secondary-bg);
     color: var(--text-color);
@@ -87,14 +176,41 @@ textarea {
     margin-bottom: 10px;
     min-height: 200px;
     resize: vertical;
+    font-family: 'Consolas', 'Courier New', monospace;
 }
 
-input[type="text"], input[type="password"] {
+/* Updated Input Styles */
+.key-input, .cipher-input {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 10px 0;
+    gap: 15px;
+}
+
+.key-input .checkbox-container,
+.cipher-input .checkbox-container {
+    flex: 1;
+    justify-content: flex-start;
+}
+
+.key-input input[type="password"],
+.cipher-input input[type="text"],
+.key-input input[type="text"] {
+    width: 150px;
+    padding: 8px 12px;
     background-color: var(--secondary-bg);
     color: var(--text-color);
     border: 1px solid var(--border-color);
-    padding: 5px;
-    margin: 5px 0;
+    outline: none;
+    transition: all 0.3s ease;
+    font-family: 'Consolas', 'Courier New', monospace;
+}
+
+.key-input input:focus,
+.cipher-input input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 5px var(--primary-color);
 }
 
 button {
@@ -105,11 +221,13 @@ button {
     cursor: pointer;
     margin: 5px 0;
     transition: all 0.3s;
+    font-family: 'Consolas', 'Courier New', monospace;
 }
 
 button:hover {
     background-color: var(--primary-color);
     color: var(--bg-color);
+    box-shadow: 0 0 10px var(--primary-color);
 }
 
 .mode-selector {
@@ -122,6 +240,7 @@ select {
     color: var(--text-color);
     border: 1px solid var(--border-color);
     padding: 5px;
+    font-family: 'Consolas', 'Courier New', monospace;
 }
 
 .chain-display {
@@ -132,53 +251,44 @@ select {
     background-color: var(--secondary-bg);
 }
 
-label {
-    margin: 5px 0;
-    display: block;
+/* Toggle Icon */
+.toggle-icon {
+    position: absolute;
+    right: -15px;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: transform 0.3s ease;
+    font-size: 0.8em;
+    opacity: 0.8;
 }
 
-.checkbox-container {
-    display: flex;
-    align-items: center;
-    margin: 5px 0;
+.group-box.collapsed .toggle-icon {
+    transform: translateY(-50%) rotate(0deg);
 }
 
-.checkbox-container input[type="checkbox"] {
-    margin-right: 10px;
+.group-box:not(.collapsed) .toggle-icon {
+    transform: translateY(-50%) rotate(135deg);
 }
 
-.key-input {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin: 5px 0;
+/* Section Content */
+.section-content {
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    max-height: 1000px;
 }
 
-.key-input .checkbox-container {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    margin: 0;
-    padding: 0;
+.group-box.collapsed .section-content {
+    max-height: 0;
 }
 
-.key-input input[type="password"] {
-    width: 120px;
-    margin-left: 10px;
-}
-
-.key-input label {
-    margin: 0;
-    display: flex;
-    align-items: center;
-}
-
+/* Counter Styles */
 .counter {
     font-size: 0.8em;
     color: var(--text-color);
     margin-left: 10px;
 }
 
+/* Config Buttons */
 .config-buttons {
     display: flex;
     align-items: center;
@@ -188,25 +298,10 @@ label {
 }
 
 .config-buttons button {
-    background-color: var(--secondary-bg);
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
-    padding: 8px 15px;
-    cursor: pointer;
-    transition: all 0.3s;
     flex: 1;
 }
 
-.config-buttons button:hover {
-    background-color: var(--primary-color);
-    color: var(--bg-color);
-}
-
-.config-buttons p {
-    margin: 0;
-    white-space: nowrap;
-}
-
+/* Modal Styles */
 .modal {
     display: none;
     position: fixed;
@@ -252,8 +347,9 @@ label {
     margin-top: 20px;
 }
 
+/* Mode Select Styles */
 #mode-select {
-    color: inherit; /* Reset to default color */
+    color: inherit;
 }
 
 #mode-select option[value="encrypt"] {
@@ -262,11 +358,10 @@ label {
 }
 
 #mode-select option[value="decrypt"] {
-    color: #00ffff; /* Turquoise blue */
+    color: #00ffff;
     background-color: var(--secondary-bg);
 }
 
-/* This ensures the select shows the chosen color */
 #mode-select.encrypt-mode {
     color: #ff0000;
 }
@@ -275,93 +370,52 @@ label {
     color: #00ffff;
 }
 
-#create-token {
-    margin-left: 10px;
-    background-color: var(--secondary-bg);
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
-    padding: 8px 15px;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-#create-token:hover {
-    background-color: var(--primary-color);
-    color: var(--bg-color);
-}
-
-#import-token {
-    margin-top: 10px;
-    width: 100%;
-    background-color: var(--secondary-bg);
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
-    padding: 8px 15px;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-#import-token:hover {
-    background-color: var(--primary-color);
-    color: var(--bg-color);
-}
-
+/* Developer Credit */
 .developer-credit {
     text-align: center;
     color: var(--text-color);
     font-size: 0.9em;
     margin-top: -15px;
     margin-bottom: 20px;
-    font-family: 'Consolas', 'Courier New', monospace;
     opacity: 0.8;
 }
 
 /* Mobile Optimizations */
 @media (max-width: 768px) {
-    /* Base typography */
     body {
         padding: 10px;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
         font-size: 14px;
         line-height: 1.4;
     }
 
-    /* Technical text elements */
-    textarea, input[type="text"], input[type="password"] {
-        font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace;
-        font-weight: 500;
-        font-size: 16px;
-        line-height: 1.5;
+    .container {
+        grid-template-columns: 1fr;
+        gap: 10px;
     }
 
-    /* Headings and important text */
-    .title {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-        font-weight: 700;
-        letter-spacing: 0.5px;
-        font-size: 1.5em;
-        margin-bottom: 15px;
+    .key-input, .cipher-input {
+        flex-direction: column;
+        align-items: stretch;
     }
 
-    h2, h3 {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-        font-weight: 600;
-        letter-spacing: 0.3px;
+    .key-input input[type="password"],
+    .cipher-input input[type="text"] {
+        width: 100%;
+        margin: 5px 0;
     }
 
-    /* Interactive elements */
-    label {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-        font-weight: 500;
-        padding: 4px 0;
+    .group-box {
+        padding: 10px;
+        margin-bottom: 10px;
+        padding-top: 30px;
+    }
+
+    .group-box h3 {
+        font-size: 1.2em;
+        padding: 0 15px;
     }
 
     button {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-        font-weight: 600;
-        letter-spacing: 0.3px;
         width: 100%;
         padding: 12px;
         margin: 5px 0;
@@ -370,98 +424,19 @@ label {
     }
 
     select {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-        font-weight: 500;
-        font-size: 16px;
         width: 100%;
         margin-bottom: 10px;
         min-height: 44px;
     }
 
-    /* Output display */
-    .chain-display {
-        font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace;
-        font-weight: 500;
-        line-height: 1.6;
-        font-size: 0.9em;
-        padding: 8px;
-        max-height: 150px;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .counter {
-        font-family: 'SF Mono', SFMono-Regular, ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace;
-        font-weight: 500;
-    }
-
-    /* Layout adjustments */
-    .container {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-
-    .group-box {
-        padding: 10px;
-        margin-bottom: 10px;
-    }
-
-    .group-box h3 {
-        font-size: 1em;
-        margin-top: -20px;
-    }
-
-    .key-input {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 8px;
-    }
-
-    .key-input .checkbox-container {
-        margin: 0;
-        padding: 4px 0;
-    }
-
-    .key-input input[type="password"] {
-        width: 100%;
-        margin-left: 0;
-    }
-
-    input[type="text"],
-    input[type="password"] {
-        padding: 8px;
-        width: 100%;
-        box-sizing: border-box;
-    }
-
-    .checkbox-container {
-        padding: 8px 0;
-    }
-
-    .checkbox-container input[type="checkbox"] {
-        transform: scale(1.2);
-        margin-right: 15px;
-    }
-
-    .checkbox-container label {
-        flex: 1;
-        padding: 8px 0;
-    }
-
-    /* Handle different screen orientations */
-    @media (orientation: landscape) {
-        .container {
-            grid-template-columns: 1fr 1fr;
-        }
-
-        .control-section {
-            grid-column: 1 / -1;
-            order: -1;
-        }
+    /* Adjust checkbox size for mobile */
+    :root {
+        --checkbox-size: 16px;
+        --checkbox-border: 1.5px;
     }
 }
 
-/* High-DPI screen optimizations */
+/* High DPI Screen Optimizations */
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
     body {
         -webkit-font-smoothing: antialiased;
@@ -469,46 +444,26 @@ label {
     }
 }
 
-/* Mobile Actions */
-.mobile-actions {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    display: none;
+/* Additional Terminal/Hacker Style Enhancements */
+.checkbox-container input[type="checkbox"]:checked + label {
+    color: var(--primary-color);
+    text-shadow: 0 0 2px var(--primary-color);
 }
 
-.mobile-actions button {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background-color: var(--accent-color);
-    border: none;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    margin: 5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.checkbox-container:hover label::before {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 3px var(--primary-color);
 }
 
-@media (max-width: 768px) {
-    .mobile-actions {
-        display: flex;
-        flex-direction: column;
-    }
+/* Input and textarea focus effects */
+textarea:focus,
+input:focus,
+select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 5px var(--primary-color);
+    outline: none;
 }
-
-/* Pull to refresh indicator */
-.refresh-indicator {
-    display: none;
-    text-align: center;
-    padding: 20px;
-    color: var(--text-color);
-}
-
-.refreshing .refresh-indicator {
-    display: block;
-}
-    </style>
+</style>
 
 </head>
 <body>
@@ -537,67 +492,77 @@ label {
                 </div>
             </div>
 
-            <div class="group-box">
-                <h3>Basic</h3>
-                <div class="checkbox-container">
-                    <input type="checkbox" id="caesar-check">
-                    <label for="caesar-check">Caesar Cipher</label>
-                    <input type="text" id="caesar-shift" placeholder="Shift (default: 3)" value="3">
-                </div>
-                <div class="checkbox-container">
-                    <input type="checkbox" id="vigenere-check">
-                    <label for="vigenere-check">Vigenère Cipher</label>
-                    <input type="text" id="vigenere-key" placeholder="Key">
-                </div>
-                <div class="checkbox-container">
-                    <input type="checkbox" id="atbash-check">
-                    <label for="atbash-check">Atbash Cipher</label>
-                </div>
-                <div class="checkbox-container">
-                    <input type="checkbox" id="reverse-check">
-                    <label for="reverse-check">Reverse Text</label>
-                </div>
-                <div class="checkbox-container">
-                    <input type="checkbox" id="morse-check">
-                    <label for="morse-check">Morse Code</label>
+            <div class="group-box collapsed">
+                <h3>Basic <span class="toggle-icon">+</span></h3>
+                <div class="section-content">
+                    <div class="cipher-input">
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="caesar-check">
+                            <label for="caesar-check">Caesar Cipher</label>
+                        </div>
+                        <input type="text" id="caesar-shift" placeholder="Shift (default: 3)" value="3">
+                    </div>
+                    <div class="cipher-input">
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="vigenere-check">
+                            <label for="vigenere-check">Vigenère Cipher</label>
+                        </div>
+                        <input type="text" id="vigenere-key" placeholder="Key">
+                    </div>
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="atbash-check">
+                        <label for="atbash-check">Atbash Cipher</label>
+                    </div>
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="reverse-check">
+                        <label for="reverse-check">Reverse Text</label>
+                    </div>
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="morse-check">
+                        <label for="morse-check">Morse Code</label>
+                    </div>
                 </div>
             </div>
-
-            <div class="group-box">
-                <h3>Encoding</h3>
-                <div class="checkbox-container">
-                    <input type="checkbox" id="base85-check">
-                    <label for="base85-check">Base85</label>
-                </div>
-                <div class="checkbox-container">
-                    <input type="checkbox" id="base64-check">
-                    <label for="base64-check">Base64</label>
-                </div>
-                <div class="checkbox-container">
-                    <input type="checkbox" id="base32-check">
-                    <label for="base32-check">Base32</label>
-                </div>
-                <div class="checkbox-container">
-                    <input type="checkbox" id="hex-check">
-                    <label for="hex-check">Hexadecimal</label>
+            
+            <div class="group-box collapsed">
+                <h3>Encoding <span class="toggle-icon">+</span></h3>
+                <div class="section-content">
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="base85-check">
+                        <label for="base85-check">Base85</label>
+                    </div>
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="base64-check">
+                        <label for="base64-check">Base64</label>
+                    </div>
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="base32-check">
+                        <label for="base32-check">Base32</label>
+                    </div>
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="hex-check">
+                        <label for="hex-check">Hexadecimal</label>
+                    </div>
                 </div>
             </div>
-
-            <div class="group-box">
-                <h3>Encryption</h3>
-                <div class="key-input">
-                    <div class="checkbox-container">
-                        <input type="checkbox" id="aes-check">
-                        <label for="aes-check">AES-256</label>
+            
+            <div class="group-box collapsed">
+                <h3>Encryption <span class="toggle-icon">+</span></h3>
+                <div class="section-content">
+                    <div class="key-input">
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="aes-check">
+                            <label for="aes-check">AES-256</label>
+                        </div>
+                        <input type="password" id="aes-key" placeholder="AES key">
                     </div>
-                    <input type="password" id="aes-key" placeholder="AES key">
-                </div>
-                <div class="key-input">
-                    <div class="checkbox-container">
-                        <input type="checkbox" id="chacha-check">
-                        <label for="chacha-check">ChaCha20-Poly1305</label>
+                    <div class="key-input">
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="chacha-check">
+                            <label for="chacha-check">ChaCha20-Poly1305</label>
+                        </div>
+                        <input type="password" id="chacha-key" placeholder="ChaCha key">
                     </div>
-                    <input type="password" id="chacha-key" placeholder="ChaCha key">
                 </div>
             </div>
 
@@ -693,21 +658,21 @@ label {
             '8': '---..', '9': '----.'
         };
 
-        // Event listeners
-        elements.inputText.addEventListener('input', updateOutput);
-        elements.modeSelect.addEventListener('change', updateMode);
-        elements.copyButton.addEventListener('click', copyToClipboard);
-        elements.resetButton.addEventListener('click', resetState);
+// Event listeners
+elements.inputText.addEventListener('input', updateOutput);
+elements.modeSelect.addEventListener('change', updateMode);
+elements.copyButton.addEventListener('click', copyToClipboard);
+elements.resetButton.addEventListener('click', resetState);
 
-        // Add event listeners for all encryption method checkboxes
-        Object.values(encryptionMethods).forEach(element => {
-            if (element) {
-                element.addEventListener('change', updateOutput);
-                if (element.type === 'text' || element.type === 'password') {
-                    element.addEventListener('input', updateOutput);
-                }
-            }
-        });
+// Add event listeners for all encryption method checkboxes
+Object.values(encryptionMethods).forEach(element => {
+    if (element) {
+        element.addEventListener('change', updateOutput);
+        if (element.type === 'text' || element.type === 'password') {
+            element.addEventListener('input', updateOutput);
+        }
+    }
+});
 
         function updateTokenButtons() {
             const isEncrypt = elements.modeSelect.value === 'encrypt';
@@ -1310,8 +1275,26 @@ window.addEventListener('click', (event) => {
     }
 });
 
-        // Initialize the application
-        updateMode();
+function toggleSection(element) {
+    element.classList.toggle('collapsed');
+    
+    // Ensure elements are properly initialized after expanding
+    if (!element.classList.contains('collapsed')) {
+        updateOutput();
+    }
+}
+
+// Initialize event listeners for group-box headers
+document.querySelectorAll('.group-box h3').forEach(header => {
+    header.addEventListener('click', (e) => {
+        // Prevent this click from triggering other event listeners
+        e.stopPropagation();
+        toggleSection(header.parentElement);
+    });
+});
+
+// Initialize the application
+updateMode();
 
         // Mobile-specific functionality
         if ('ontouchstart' in window) {
