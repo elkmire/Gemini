@@ -1,9 +1,11 @@
 # Gemini Cryptography Application
-![Gemini logo(1)](https://github.com/user-attachments/assets/7dd5799b-6411-4fd8-8e8b-edd2000e2527)
+# [Gemini](https://elkmire.github.io/Gemini/ "Gemini Web Version") <- Web-Version
+### (Web-version limited compared to release version)
 
-A versatile encryption/decryption and encoding/decoding tool built with PyQt5, designed for both educational purposes and practical security applications.
+A versatile encryption/decryption and encoding/decoding tool built with PyQt5 (and converted to HTML for the webversion), designed for both educational purposes and practical security applications.
+![Gemini](https://github.com/user-attachments/assets/9ac3f85d-2d9e-4f5f-9831-80d90c0a326e)
 
-![Gemini](https://github.com/user-attachments/assets/942eb4f8-f7c6-4c6c-88d2-029778b4068c)
+
 
 ## Features
 #### Basic Encryption
@@ -69,6 +71,9 @@ A versatile encryption/decryption and encoding/decoding tool built with PyQt5, d
    - High-performance encryption
    - Built-in authentication
    - Suitable for high-security applications
+  
+3. **NovelCrpyt**
+   - CPU intensive, complex layering
 
 ## Usage
 
@@ -171,6 +176,8 @@ A versatile encryption/decryption and encoding/decoding tool built with PyQt5, d
 No installation needed, just:
 
 1. Run the application.
+
+   (The python script is wrapped by auto-py-to-exe for easy deployment)
 
 
 ## Best Practices
