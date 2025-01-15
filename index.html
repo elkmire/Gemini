@@ -252,6 +252,70 @@ label {
     margin-top: 20px;
 }
 
+#mode-select {
+    color: inherit; /* Reset to default color */
+}
+
+#mode-select option[value="encrypt"] {
+    color: #ff0000;
+    background-color: var(--secondary-bg);
+}
+
+#mode-select option[value="decrypt"] {
+    color: #00ffff; /* Turquoise blue */
+    background-color: var(--secondary-bg);
+}
+
+/* This ensures the select shows the chosen color */
+#mode-select.encrypt-mode {
+    color: #ff0000;
+}
+
+#mode-select.decrypt-mode {
+    color: #00ffff;
+}
+
+#create-token {
+    margin-left: 10px;
+    background-color: var(--secondary-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+#create-token:hover {
+    background-color: var(--primary-color);
+    color: var(--bg-color);
+}
+
+#import-token {
+    margin-top: 10px;
+    width: 100%;
+    background-color: var(--secondary-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+#import-token:hover {
+    background-color: var(--primary-color);
+    color: var(--bg-color);
+}
+
+.developer-credit {
+    text-align: center;
+    color: var(--text-color);
+    font-size: 0.9em;
+    margin-top: -15px;
+    margin-bottom: 20px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    opacity: 0.8;
+}
+
 /* Mobile Optimizations */
 @media (max-width: 768px) {
     /* Base typography */
@@ -451,18 +515,20 @@ label {
     <div class="title">
         <span>G</span><span>E</span><span>M</span><span>I</span><span>N</span><span>I</span>
     </div>
+    <div class="developer-credit">developed by elkmire</div>
     
     <div class="container">
         <div class="input-section">
             <h2>Input <span class="counter" id="input-counter">(0 chars)</span></h2>
             <textarea id="input-text" placeholder="Enter message to encrypt..."></textarea>
+            <button id="import-token" style="display: none;">Import Token</button>
         </div>
 
         <div class="control-section">
             <div class="mode-selector">
                 <select id="mode-select">
-                    <option value="encrypt">Encrypt</option>
-                    <option value="decrypt">Decrypt</option>
+                    <option value="encrypt" style="color: #ff0000;">Encrypt</option>
+                    <option value="decrypt" style="color: #00ffff;">Decrypt</option>
                 </select>
                 <div class="config-buttons">
                     <button id="load-config">Load Config</button>
@@ -547,6 +613,7 @@ label {
             <textarea id="output-text" readonly placeholder="Encrypted message will appear here..."></textarea>
             <div>
                 <button id="copy-button">Copy Message</button>
+                <button id="create-token" style="display: none;">Create Token</button>
             </div>
         </div>
     </div>
@@ -610,6 +677,11 @@ label {
             chachaKey: document.getElementById('chacha-key')
         };
 
+        const createTokenButton = document.getElementById('create-token');
+        const importTokenButton = document.getElementById('import-token');
+
+
+
         // Morse code lookup table
         const morseCode = {
             'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
@@ -637,14 +709,62 @@ label {
             }
         });
 
+        function updateTokenButtons() {
+            const isEncrypt = elements.modeSelect.value === 'encrypt';
+            createTokenButton.style.display = isEncrypt ? 'inline-block' : 'none';
+            importTokenButton.style.display = isEncrypt ? 'none' : 'inline-block';
+        }
+
         function updateMode() {
             const isEncrypt = elements.modeSelect.value === 'encrypt';
+            elements.modeSelect.className = isEncrypt ? 'encrypt-mode' : 'decrypt-mode';
             elements.inputText.placeholder = isEncrypt ? "Enter message to encrypt..." : "Enter message to decrypt...";
             elements.outputText.placeholder = isEncrypt ? "Encrypted message will appear here..." : "Decrypted message will appear here...";
             elements.chainDisplay.innerHTML = isEncrypt ? "Encryption chain will appear here..." : "Decryption chain will appear here...";
             elements.copyButton.textContent = isEncrypt ? "Copy Encrypted Message" : "Copy Decrypted Message";
+            updateTokenButtons();
             updateOutput();
         }
+
+// Create Token functionality
+createTokenButton.addEventListener('click', () => {
+    const output = elements.outputText.value;
+    if (!output) {
+        alert('No encrypted message to save');
+        return;
+    }
+    
+    const blob = new Blob([output], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'GToken.txt';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+});
+
+// Import Token functionality
+importTokenButton.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.txt';
+    
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            elements.inputText.value = e.target.result;
+            updateOutput();
+        };
+        reader.readAsText(file);
+    };
+    
+    input.click();
+});
 
         // Basic encryption methods
         function caesarCipher(text, shift, decrypt = false) {
@@ -1008,7 +1128,6 @@ label {
 // Configuration management functions
 function getCurrentConfig() {
     return {
-        mode: elements.modeSelect.value,
         caesar: {
             enabled: encryptionMethods.caesar.checked,
             shift: encryptionMethods.caesarShift.value
@@ -1036,8 +1155,7 @@ function getCurrentConfig() {
 }
 
 function applyConfig(config) {
-    elements.modeSelect.value = config.mode;
-    
+   
     encryptionMethods.caesar.checked = config.caesar.enabled;
     encryptionMethods.caesarShift.value = config.caesar.shift;
     
@@ -1141,7 +1259,7 @@ document.getElementById('save-confirm').addEventListener('click', async () => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'gemini-config.txt';
+        a.download = 'GEMINI-KEY.txt';
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
