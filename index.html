@@ -1616,8 +1616,6 @@ function applyConfig(config) {
     encryptionMethods.chacha.checked = config.chacha.enabled;
     encryptionMethods.chachaKey.value = config.chacha.key;
 
-    // Trigger update
-    elements.modeSelect.dispatchEvent(new Event('change'));
 }
 
 async function encryptConfig(config, password) {
