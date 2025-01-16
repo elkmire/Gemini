@@ -13,13 +13,20 @@
     <style>
 /* Light/Dark Mode Color Variables */
 :root {
+    /* Base colors that work across all browsers */
+    --pure-black: #000000;
+    --pure-white: #ffffff;
+    
     /* Dark mode colors (default) */
-    --primary-color: #00ff41;
-    --bg-color: #000000;
-    --secondary-bg: #0a0a0a;
-    --border-color: #00ff41;
-    --text-color: #00ff41;
-    --accent-color: #ff1493;
+    --primary-color: rgb(0, 255, 65);
+    --primary-color-fallback: #00ff41;
+    --bg-color: rgb(0, 0, 0);
+    --secondary-bg: rgb(10, 10, 10);
+    --border-color: rgb(0, 255, 65);
+    --text-color: rgb(0, 255, 65);
+    --accent-color: rgb(255, 20, 147);
+    
+    /* System variables */
     --checkbox-size: 18px;
     --checkbox-border: 2px;
     --font-weight-normal: 500;
@@ -28,26 +35,30 @@
     --heading-font-size: 2.2em;
     --subheading-font-size: 1.6em;
     --text-font-size: 1.1em;
+    
+    /* Fallback colors for older browsers */
+    color-scheme: dark light;
 }
 
 /* Light mode colors */
 @media (prefers-color-scheme: light) {
     :root {
-        --primary-color: #006400;
-        --bg-color: #ffffff;
-        --secondary-bg: #f5f5f5;
-        --border-color: #006400;
-        --text-color: #000000;
-        --accent-color: #d81b60;
+        --primary-color: rgb(0, 100, 0);
+        --primary-color-fallback: #006400;
+        --bg-color: rgb(255, 255, 255);
+        --secondary-bg: rgb(245, 245, 245);
+        --border-color: rgb(0, 100, 0);
+        --text-color: rgb(0, 0, 0);
+        --accent-color: rgb(216, 27, 96);
     }
     
-    /* Update title colors for light mode */
-    .title span:nth-child(1) { color: #0077cc !important; }
-    .title span:nth-child(2) { color: #0066b2 !important; }
-    .title span:nth-child(3) { color: #d81b60 !important; }
-    .title span:nth-child(4) { color: #c41e3a !important; }
-    .title span:nth-child(5) { color: #b22222 !important; }
-    .title span:nth-child(6) { color: #8b0000 !important; }
+    /* Update title colors for light mode with RGB values */
+    .title span:nth-child(1) { color: rgb(0, 119, 204) !important; }
+    .title span:nth-child(2) { color: rgb(0, 102, 178) !important; }
+    .title span:nth-child(3) { color: rgb(216, 27, 96) !important; }
+    .title span:nth-child(4) { color: rgb(196, 30, 58) !important; }
+    .title span:nth-child(5) { color: rgb(178, 34, 34) !important; }
+    .title span:nth-child(6) { color: rgb(139, 0, 0) !important; }
 }
 
 /* Base styles */
@@ -81,13 +92,13 @@ body {
     margin: 0 2px;
 }
 
-/* Dark mode title colors (default) */
-.title span:nth-child(1) { color: #00ffff; }
-.title span:nth-child(2) { color: #00ccff; }
-.title span:nth-child(3) { color: #ff3366; }
-.title span:nth-child(4) { color: #ff3333; }
-.title span:nth-child(5) { color: #ff0000; }
-.title span:nth-child(6) { color: #cc0000; }
+/* Dark mode title colors (default) with RGB values */
+.title span:nth-child(1) { color: rgb(0, 255, 255); }
+.title span:nth-child(2) { color: rgb(0, 204, 255); }
+.title span:nth-child(3) { color: rgb(255, 51, 102); }
+.title span:nth-child(4) { color: rgb(255, 51, 51); }
+.title span:nth-child(5) { color: rgb(255, 0, 0); }
+.title span:nth-child(6) { color: rgb(204, 0, 0); }
 
 .input-section, .output-section {
     display: flex;
@@ -1435,12 +1446,15 @@ Object.values(encryptionMethods).forEach(element => {
     updateMode();
 }
 
-// Configuration management functions
 function getCurrentConfig() {
     return {
+        // Basic ciphers
         caesar: {
             enabled: encryptionMethods.caesar.checked,
             shift: encryptionMethods.caesarShift.value
+        },
+        rot13: {
+            enabled: encryptionMethods.rot13.checked
         },
         vigenere: {
             enabled: encryptionMethods.vigenere.checked,
@@ -1449,10 +1463,18 @@ function getCurrentConfig() {
         atbash: encryptionMethods.atbash.checked,
         reverse: encryptionMethods.reverse.checked,
         morse: encryptionMethods.morse.checked,
+        
+        // Encoding methods
+        url: encryptionMethods.url.checked,
+        unicode: encryptionMethods.unicode.checked,
+        binary: encryptionMethods.binary.checked,
         base85: encryptionMethods.base85.checked,
         base64: encryptionMethods.base64.checked,
+        base58: encryptionMethods.base58.checked,
         base32: encryptionMethods.base32.checked,
         hex: encryptionMethods.hex.checked,
+        
+        // Advanced encryption
         aes: {
             enabled: encryptionMethods.aes.checked,
             key: encryptionMethods.aesKey.value
@@ -1465,9 +1487,11 @@ function getCurrentConfig() {
 }
 
 function applyConfig(config) {
-   
+    // Basic ciphers
     encryptionMethods.caesar.checked = config.caesar.enabled;
     encryptionMethods.caesarShift.value = config.caesar.shift;
+    
+    encryptionMethods.rot13.checked = config.rot13.enabled;
     
     encryptionMethods.vigenere.checked = config.vigenere.enabled;
     encryptionMethods.vigenereKey.value = config.vigenere.key;
@@ -1475,17 +1499,25 @@ function applyConfig(config) {
     encryptionMethods.atbash.checked = config.atbash;
     encryptionMethods.reverse.checked = config.reverse;
     encryptionMethods.morse.checked = config.morse;
+    
+    // Encoding methods
+    encryptionMethods.url.checked = config.url;
+    encryptionMethods.unicode.checked = config.unicode;
+    encryptionMethods.binary.checked = config.binary;
     encryptionMethods.base85.checked = config.base85;
     encryptionMethods.base64.checked = config.base64;
+    encryptionMethods.base58.checked = config.base58;
     encryptionMethods.base32.checked = config.base32;
     encryptionMethods.hex.checked = config.hex;
     
+    // Advanced encryption
     encryptionMethods.aes.checked = config.aes.enabled;
     encryptionMethods.aesKey.value = config.aes.key;
     
     encryptionMethods.chacha.checked = config.chacha.enabled;
     encryptionMethods.chachaKey.value = config.chacha.key;
 
+    // Trigger update
     elements.modeSelect.dispatchEvent(new Event('change'));
 }
 
