@@ -2,7 +2,8 @@
 # [Gemini](https://elkmire.github.io/Gemini/ "Gemini Web Version") <- Web-Version
 
 A versatile encryption/decryption and encoding/decoding tool built with PyQt5 (and converted to HTML for the webversion), designed for both educational purposes and practical security applications.
-![Gemini](https://github.com/user-attachments/assets/9ac3f85d-2d9e-4f5f-9831-80d90c0a326e)
+
+![Gemini](https://github.com/user-attachments/assets/4090b154-8a5b-4b39-aaf1-e2c18c676df2)
 
 
 
