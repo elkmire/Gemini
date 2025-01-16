@@ -645,6 +645,12 @@ button:focus {
                     </div>
                     <div class="cipher-input">
                         <div class="checkbox-container">
+                            <input type="checkbox" id="rot13-check">
+                            <label for="rot13-check">ROT13</label>
+                        </div>
+                    </div>
+                    <div class="cipher-input">
+                        <div class="checkbox-container">
                             <input type="checkbox" id="vigenere-check">
                             <label for="vigenere-check">Vigenère Cipher</label>
                         </div>
@@ -669,12 +675,28 @@ button:focus {
                 <h3>Encoding <span class="toggle-icon">+</span></h3>
                 <div class="section-content">
                     <div class="checkbox-container">
+                        <input type="checkbox" id="url-check">
+                        <label for="url-check">URL Encoding</label>
+                    </div>
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="unicode-check">
+                        <label for="unicode-check">Unicode Escape</label>
+                    </div>
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="binary-check">
+                        <label for="binary-check">Binary</label>
+                    </div>
+                    <div class="checkbox-container">
                         <input type="checkbox" id="base85-check">
                         <label for="base85-check">Base85</label>
                     </div>
                     <div class="checkbox-container">
                         <input type="checkbox" id="base64-check">
                         <label for="base64-check">Base64</label>
+                    </div>
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="base58-check">
+                        <label for="base58-check">Base58</label>
                     </div>
                     <div class="checkbox-container">
                         <input type="checkbox" id="base32-check">
@@ -768,13 +790,18 @@ button:focus {
         const encryptionMethods = {
             caesar: document.getElementById('caesar-check'),
             caesarShift: document.getElementById('caesar-shift'),
+            rot13: document.getElementById('rot13-check'),
             vigenere: document.getElementById('vigenere-check'),
             vigenereKey: document.getElementById('vigenere-key'),
             atbash: document.getElementById('atbash-check'),
             reverse: document.getElementById('reverse-check'),
             morse: document.getElementById('morse-check'),
+            url: document.getElementById('url-check'),
+            unicode: document.getElementById('unicode-check'),
+            binary: document.getElementById('binary-check'),
             base85: document.getElementById('base85-check'),
             base64: document.getElementById('base64-check'),
+            base58: document.getElementById('base58-check'),
             base32: document.getElementById('base32-check'),
             hex: document.getElementById('hex-check'),
             aes: document.getElementById('aes-check'),
@@ -946,7 +973,129 @@ function morseDecode(text) {
     ).join(' ').toLowerCase();
 }
 
+function rot13(text) {
+            return text.replace(/[a-zA-Z]/g, char => {
+                const code = char.charCodeAt(0);
+                const isUpperCase = char === char.toUpperCase();
+                const base = isUpperCase ? 65 : 97;
+                return String.fromCharCode(((code - base + 13) % 26) + base);
+            });
+        }
+
 // Encoding methods
+
+// URL encoding methods
+function urlEncode(text) {
+    return encodeURIComponent(text);
+}
+
+function urlDecode(text) {
+    try {
+        return decodeURIComponent(text);
+    } catch (e) {
+        throw new Error('Invalid URL encoding');
+    }
+}
+
+// Unicode escape methods
+function unicodeEscape(text) {
+    return text.replace(/[\u0080-\uFFFF]/g, char => {
+        const code = char.charCodeAt(0);
+        // Use \U for characters above 0xFFFF (emoji, etc.)
+        if (code > 0xFFFF) {
+            return `\\U${code.toString(16).padStart(8, '0')}`;
+        }
+        // Use \u for non-ASCII Unicode characters
+        return `\\u${code.toString(16).padStart(4, '0')}`;
+    });
+}
+
+function unicodeUnescape(text) {
+    return text
+        // Handle 8-digit Unicode escapes (\U)
+        .replace(/\\U([0-9a-fA-F]{8})/g, (match, hex) => 
+            String.fromCodePoint(parseInt(hex, 16))
+        )
+        // Handle 4-digit Unicode escapes (\u)
+        .replace(/\\u([0-9a-fA-F]{4})/g, (match, hex) => 
+            String.fromCharCode(parseInt(hex, 16))
+        );
+}
+
+// Binary encoding methods
+function binaryEncode(text) {
+    return text.split('').map(char => 
+        char.charCodeAt(0).toString(2).padStart(8, '0')
+    ).join(' ');
+}
+
+function binaryDecode(text) {
+    try {
+        return text.trim().split(' ').map(bin => 
+            String.fromCharCode(parseInt(bin, 2))
+        ).join('');
+    } catch (e) {
+        throw new Error('Invalid binary encoding');
+    }
+}
+
+// Base58 encoding methods
+const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+function base58Encode(text) {
+    let bytes = new TextEncoder().encode(text);
+    let digits = [0];
+    
+    for (let i = 0; i < bytes.length; i++) {
+        let carry = bytes[i];
+        for (let j = 0; j < digits.length; j++) {
+            carry += digits[j] << 8;
+            digits[j] = carry % 58;
+            carry = (carry / 58) | 0;
+        }
+        while (carry > 0) {
+            digits.push(carry % 58);
+            carry = (carry / 58) | 0;
+        }
+    }
+
+    let result = '';
+    for (let digit of digits) {
+        result = BASE58_ALPHABET[digit] + result;
+    }
+    return result;
+}
+
+function base58Decode(text) {
+    try {
+        let bytes = [0];
+        for (let char of text) {
+            let value = BASE58_ALPHABET.indexOf(char);
+            if (value === -1) throw new Error('Invalid character');
+            
+            for (let i = 0; i < bytes.length; i++) {
+                bytes[i] *= 58;
+            }
+            bytes[0] += value;
+            
+            let carry = 0;
+            for (let i = 0; i < bytes.length; i++) {
+                bytes[i] += carry;
+                carry = bytes[i] >> 8;
+                bytes[i] &= 0xff;
+            }
+            while (carry > 0) {
+                bytes.push(carry & 0xff);
+                carry >>= 8;
+            }
+        }
+        return new TextDecoder().decode(new Uint8Array(bytes));
+    } catch (e) {
+        throw new Error('Invalid Base58 encoding');
+    }
+}
+
+
 function base85Encode(text) {
     // This is a simplified Base85 implementation
     const bytes = new TextEncoder().encode(text);
@@ -1058,148 +1207,199 @@ async function updateOutput() {
         return;
     }
 
-const isEncrypt = elements.modeSelect.value === 'encrypt';
-const chain = [];
+    const isEncrypt = elements.modeSelect.value === 'encrypt';
+    const chain = [];
 
-try {
-    if (isEncrypt) {
-        // Basic encryption methods
-        if (encryptionMethods.caesar.checked) {
-            const shift = encryptionMethods.caesarShift.value || '3';
-            text = caesarCipher(text, shift);
-            chain.push(`Caesar Cipher (shift=${shift})`);
+    try {
+        if (isEncrypt) {
+            // Basic encryption methods
+            if (encryptionMethods.caesar.checked) {
+                const shift = encryptionMethods.caesarShift.value || '3';
+                text = caesarCipher(text, shift);
+                chain.push(`Caesar Cipher (shift=${shift})`);
+            }
+
+            if (encryptionMethods.rot13.checked) {
+                text = rot13(text);
+                chain.push('ROT13');
+            }
+
+            if (encryptionMethods.vigenere.checked) {
+                const key = encryptionMethods.vigenereKey.value;
+                if (!key) throw new Error('Vigenère key required');
+                text = vigenereCipher(text, key);
+                chain.push(`Vigenère Cipher (key=${key})`);
+            }
+
+            if (encryptionMethods.atbash.checked) {
+                text = atbashCipher(text);
+                chain.push('Atbash Cipher');
+            }
+
+            if (encryptionMethods.reverse.checked) {
+                text = reverseText(text);
+                chain.push('Text Reversal');
+            }
+
+            if (encryptionMethods.morse.checked) {
+                text = morseEncode(text);
+                chain.push('Morse Code');
+            }
+
+            // Advanced encryption
+            if (encryptionMethods.aes.checked) {
+                text = await aesEncrypt(text, encryptionMethods.aesKey.value);
+                chain.push('AES-256 Encryption');
+            }
+
+            if (encryptionMethods.chacha.checked) {
+                text = await chachaEncrypt(text, encryptionMethods.chachaKey.value);
+                chain.push('ChaCha20-Poly1305 Encryption');
+            }
+
+            // Encoding methods
+            if (encryptionMethods.url.checked) {
+                text = urlEncode(text);
+                chain.push('URL Encoding');
+            }
+
+            if (encryptionMethods.unicode.checked) {
+                text = unicodeEscape(text);
+                chain.push('Unicode Escape');
+            }
+
+            if (encryptionMethods.binary.checked) {
+                text = binaryEncode(text);
+                chain.push('Binary Encoding');
+            }
+
+            if (encryptionMethods.base85.checked) {
+                text = base85Encode(text);
+                chain.push('Base85 Encoding');
+            }
+
+            if (encryptionMethods.base64.checked) {
+                text = base64Encode(text);
+                chain.push('Base64 Encoding');
+            }
+
+            if (encryptionMethods.base58.checked) {
+                text = base58Encode(text);
+                chain.push('Base58 Encoding');
+            }
+
+            if (encryptionMethods.base32.checked) {
+                text = base32Encode(text);
+                chain.push('Base32 Encoding');
+            }
+
+            if (encryptionMethods.hex.checked) {
+                text = hexEncode(text);
+                chain.push('Hexadecimal Encoding');
+            }
+
+        } else {
+            // Decryption in reverse order
+            if (encryptionMethods.hex.checked) {
+                text = hexDecode(text);
+                chain.push('Hexadecimal Decoding');
+            }
+
+            if (encryptionMethods.base32.checked) {
+                text = base32Decode(text);
+                chain.push('Base32 Decoding');
+            }
+
+            if (encryptionMethods.base58.checked) {
+                text = base58Decode(text);
+                chain.push('Base58 Decoding');
+            }
+
+            if (encryptionMethods.base64.checked) {
+                text = base64Decode(text);
+                chain.push('Base64 Decoding');
+            }
+
+            if (encryptionMethods.base85.checked) {
+                text = base85Decode(text);
+                chain.push('Base85 Decoding');
+            }
+
+            if (encryptionMethods.binary.checked) {
+                text = binaryDecode(text);
+                chain.push('Binary Decoding');
+            }
+
+            if (encryptionMethods.unicode.checked) {
+                text = unicodeUnescape(text);
+                chain.push('Unicode Unescape');
+            }
+
+            if (encryptionMethods.url.checked) {
+                text = urlDecode(text);
+                chain.push('URL Decoding');
+            }
+
+            if (encryptionMethods.chacha.checked) {
+                text = await chachaDecrypt(text, encryptionMethods.chachaKey.value);
+                chain.push('ChaCha20-Poly1305 Decryption');
+            }
+
+            if (encryptionMethods.aes.checked) {
+                text = await aesDecrypt(text, encryptionMethods.aesKey.value);
+                chain.push('AES-256 Decryption');
+            }
+
+            if (encryptionMethods.morse.checked) {
+                text = morseDecode(text);
+                chain.push('Morse Code Decoding');
+            }
+
+            if (encryptionMethods.reverse.checked) {
+                text = reverseText(text);
+                chain.push('Text Reversal');
+            }
+
+            if (encryptionMethods.atbash.checked) {
+                text = atbashCipher(text);
+                chain.push('Atbash Cipher');
+            }
+
+            if (encryptionMethods.vigenere.checked) {
+                const key = encryptionMethods.vigenereKey.value;
+                if (!key) throw new Error('Vigenère key required');
+                text = vigenereCipher(text, key, true);
+                chain.push(`Vigenère Cipher (key=${key})`);
+            }
+
+            if (encryptionMethods.rot13.checked) {
+                text = rot13(text);
+                chain.push('ROT13');
+            }
+
+            if (encryptionMethods.caesar.checked) {
+                const shift = encryptionMethods.caesarShift.value || '3';
+                text = caesarCipher(text, shift, true);
+                chain.push(`Caesar Cipher (shift=${shift})`);
+            }
         }
 
-        if (encryptionMethods.vigenere.checked) {
-            const key = encryptionMethods.vigenereKey.value;
-            if (!key) throw new Error('Vigenère key required');
-            text = vigenereCipher(text, key);
-            chain.push(`Vigenère Cipher (key=${key})`);
-        }
+        elements.outputText.value = text;
 
-        if (encryptionMethods.atbash.checked) {
-            text = atbashCipher(text);
-            chain.push('Atbash Cipher');
+        // Update chain display
+        if (chain.length > 0) {
+            const chainText = `${isEncrypt ? 'Encryption' : 'Decryption'} Steps:\n` +
+                chain.map((step, i) => `${i + 1}. ${step}`).join('\n');
+            elements.chainDisplay.innerHTML = chainText;
+        } else {
+            elements.chainDisplay.innerHTML = `No ${isEncrypt ? 'encryption' : 'decryption'} applied`;
         }
-
-        if (encryptionMethods.reverse.checked) {
-            text = reverseText(text);
-            chain.push('Text Reversal');
-        }
-
-        if (encryptionMethods.morse.checked) {
-            text = morseEncode(text);
-            chain.push('Morse Code');
-        }
-
-        // Advanced encryption
-        if (encryptionMethods.aes.checked) {
-            text = await aesEncrypt(text, encryptionMethods.aesKey.value);
-            chain.push('AES-256 Encryption');
-        }
-
-        if (encryptionMethods.chacha.checked) {
-            text = await chachaEncrypt(text, encryptionMethods.chachaKey.value);
-            chain.push('ChaCha20-Poly1305 Encryption');
-        }
-
-        // Encoding methods
-        if (encryptionMethods.base85.checked) {
-            text = base85Encode(text);
-            chain.push('Base85 Encoding');
-        }
-
-        if (encryptionMethods.base64.checked) {
-            text = base64Encode(text);
-            chain.push('Base64 Encoding');
-        }
-
-        if (encryptionMethods.base32.checked) {
-            text = base32Encode(text);
-            chain.push('Base32 Encoding');
-        }
-
-        if (encryptionMethods.hex.checked) {
-            text = hexEncode(text);
-            chain.push('Hexadecimal Encoding');
-        }
-    } else {
-        // Decryption in reverse order
-        if (encryptionMethods.hex.checked) {
-            text = hexDecode(text);
-            chain.push('Hexadecimal Decoding');
-        }
-
-        if (encryptionMethods.base32.checked) {
-            text = base32Decode(text);
-            chain.push('Base32 Decoding');
-        }
-
-        if (encryptionMethods.base64.checked) {
-            text = base64Decode(text);
-            chain.push('Base64 Decoding');
-        }
-
-        if (encryptionMethods.base85.checked) {
-            text = base85Decode(text);
-            chain.push('Base85 Decoding');
-        }
-
-        if (encryptionMethods.chacha.checked) {
-            text = await chachaDecrypt(text, encryptionMethods.chachaKey.value);
-            chain.push('ChaCha20-Poly1305 Decryption');
-        }
-
-        if (encryptionMethods.aes.checked) {
-            text = await aesDecrypt(text, encryptionMethods.aesKey.value);
-            chain.push('AES-256 Decryption');
-        }
-
-        if (encryptionMethods.morse.checked) {
-            text = morseDecode(text);
-            chain.push('Morse Code');
-        }
-
-        if (encryptionMethods.reverse.checked) {
-            text = reverseText(text);
-            chain.push('Text Reversal');
-        }
-
-        if (encryptionMethods.atbash.checked) {
-            text = atbashCipher(text);
-            chain.push('Atbash Cipher');
-        }
-
-        if (encryptionMethods.vigenere.checked) {
-            const key = encryptionMethods.vigenereKey.value;
-            if (!key) throw new Error('Vigenère key required');
-            text = vigenereCipher(text, key, true);
-            chain.push(`Vigenère Cipher (key=${key})`);
-        }
-
-        if (encryptionMethods.caesar.checked) {
-            const shift = encryptionMethods.caesarShift.value || '3';
-            text = caesarCipher(text, shift, true);
-            chain.push(`Caesar Cipher (shift=${shift})`);
-        }
+    } catch (e) {
+        elements.outputText.value = `Error: ${e.message}`;
+        elements.chainDisplay.innerHTML = `Error occurred during ${isEncrypt ? 'encryption' : 'decryption'}`;
     }
 
-    elements.outputText.value = text;
-
-    // Update chain display
-    if (chain.length > 0) {
-        const chainText = `${isEncrypt ? 'Encryption' : 'Decryption'} Steps:\n` +
-            chain.map((step, i) => `${i + 1}. ${step}`).join('\n');
-        elements.chainDisplay.innerHTML = chainText;
-    } else {
-        elements.chainDisplay.innerHTML = `No ${isEncrypt ? 'encryption' : 'decryption'} applied`;
-    }
-} catch (e) {
-    elements.outputText.value = `Error: ${e.message}`;
-    elements.chainDisplay.innerHTML = `Error occurred during ${isEncrypt ? 'encryption' : 'decryption'}`;
-}
-
-updateCounters();
+    updateCounters();
 }
 
 function updateCounters() {
