@@ -845,56 +845,175 @@ button:focus {
     </div>
 
     <script>
-        // Initialize all UI elements
-        const elements = {
-            inputText: document.getElementById('input-text'),
-            outputText: document.getElementById('output-text'),
-            chainDisplay: document.getElementById('chain-display'),
-            inputCounter: document.getElementById('input-counter'),
-            outputCounter: document.getElementById('output-counter'),
-            copyButton: document.getElementById('copy-button'),
-            resetButton: document.getElementById('reset-button')
-        };
+    // Initialize all UI elements
+    const elements = {
+        inputText: document.getElementById('input-text'),
+        outputText: document.getElementById('output-text'),
+        chainDisplay: document.getElementById('chain-display'),
+        inputCounter: document.getElementById('input-counter'),
+        outputCounter: document.getElementById('output-counter'),
+        copyButton: document.getElementById('copy-button'),
+        resetButton: document.getElementById('reset-button')
+    };
 
-        // Initialize encryption methods
-        const encryptionMethods = {
-            caesar: document.getElementById('caesar-check'),
-            caesarShift: document.getElementById('caesar-shift'),
-            rot13: document.getElementById('rot13-check'),
-            vigenere: document.getElementById('vigenere-check'),
-            vigenereKey: document.getElementById('vigenere-key'),
-            atbash: document.getElementById('atbash-check'),
-            reverse: document.getElementById('reverse-check'),
-            morse: document.getElementById('morse-check'),
-            url: document.getElementById('url-check'),
-            unicode: document.getElementById('unicode-check'),
-            binary: document.getElementById('binary-check'),
-            base85: document.getElementById('base85-check'),
-            base64: document.getElementById('base64-check'),
-            base58: document.getElementById('base58-check'),
-            base32: document.getElementById('base32-check'),
-            hex: document.getElementById('hex-check'),
-            aes: document.getElementById('aes-check'),
-            aesKey: document.getElementById('aes-key'),
-            chacha: document.getElementById('chacha-check'),
-            chachaKey: document.getElementById('chacha-key')
-        };
+    // Initialize encryption methods
+    const encryptionMethods = {
+        caesar: document.getElementById('caesar-check'),
+        caesarShift: document.getElementById('caesar-shift'),
+        rot13: document.getElementById('rot13-check'),
+        vigenere: document.getElementById('vigenere-check'),
+        vigenereKey: document.getElementById('vigenere-key'),
+        atbash: document.getElementById('atbash-check'),
+        reverse: document.getElementById('reverse-check'),
+        morse: document.getElementById('morse-check'),
+        url: document.getElementById('url-check'),
+        unicode: document.getElementById('unicode-check'),
+        binary: document.getElementById('binary-check'),
+        base85: document.getElementById('base85-check'),
+        base64: document.getElementById('base64-check'),
+        base58: document.getElementById('base58-check'),
+        base32: document.getElementById('base32-check'),
+        hex: document.getElementById('hex-check'),
+        aes: document.getElementById('aes-check'),
+        aesKey: document.getElementById('aes-key'),
+        chacha: document.getElementById('chacha-check'),
+        chachaKey: document.getElementById('chacha-key')
+    };
 
-        const createTokenButton = document.getElementById('create-token');
-        const importTokenButton = document.getElementById('import-token');
+// Constants for processing
+const CHUNK_SIZE = 1024 * 1024; // 1MB chunks for large string processing
+const SAFE_CHUNK_SIZE = 5000;   // 5KB chunks for stack-sensitive operations
+
+const createTokenButton = document.getElementById('create-token');
+const importTokenButton = document.getElementById('import-token');
+
+const progress = addProgressBar();
+window.updateProgress = (operation, value) => {
+    progress.show();
+    progress.update(value);
+    if (value >= 100) {
+        setTimeout(() => progress.hide(), 500);
+    }
+};
 
 
 
-        // Morse code lookup table
-        const morseCode = {
-            'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
-            'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
-            'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
-            'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
-            'Y': '-.--', 'Z': '--..', '0': '-----', '1': '.----', '2': '..---',
-            '3': '...--', '4': '....-', '5': '.....', '6': '-....', '7': '--...',
-            '8': '---..', '9': '----.'
-        };
+const morseCode = {
+    // Letters
+    'A': '.-',     'B': '-...',   'C': '-.-.', 
+    'D': '-..',    'E': '.',      'F': '..-.',
+    'G': '--.',    'H': '....',   'I': '..',
+    'J': '.---',   'K': '-.-',    'L': '.-..',
+    'M': '--',     'N': '-.',     'O': '---',
+    'P': '.--.',   'Q': '--.-',   'R': '.-.',
+    'S': '...',    'T': '-',      'U': '..-',
+    'V': '...-',   'W': '.--',    'X': '-..-',
+    'Y': '-.--',   'Z': '--..',
+    
+    // Numbers
+    '0': '-----',  '1': '.----',  '2': '..---',
+    '3': '...--',  '4': '....-',  '5': '.....',
+    '6': '-....',  '7': '--...',  '8': '---..',
+    '9': '----.',
+    
+    // Punctuation
+    '.': '.-.-.-', ',': '--..--', '?': '..--..',
+    '!': '-.-.--', '/': '-..-.',  '(': '-.--.',
+    ')': '-.--.-', '&': '.-...',  ':': '---...',
+    ';': '-.-.-.', '=': '-...-',  '+': '.-.-.',
+    '-': '-....-', '_': '..--.-', '"': '.-..-.',
+    '$': '...-..-','@': '.--.-.',
+    
+    // Special characters
+    ' ': ' ',      // Space between words
+    '\n': '\n',    // Newline
+    '\r': '',      // Carriage return (ignored)
+    '\t': ' '      // Tab (converted to space)
+};
+
+const reverseMorse = Object.fromEntries(
+    Object.entries(morseCode).map(([key, value]) => [value, key])
+);
+
+// Base32 with proper padding and extended alphabet
+const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+const BASE32_MAPPING = Object.fromEntries(
+    [...BASE32_ALPHABET].map((char, index) => [char, index])
+);
+
+// Base58 with improved binary data handling
+const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+const BASE58_MAPPING = Object.fromEntries(
+    [...BASE58_ALPHABET].map((char, index) => [char, index])
+);
+
+// Define incompatible methods mapping
+const INCOMPATIBLE_METHODS = {
+    'binary-check': 'Binary',
+    'hex-check': 'Hexadecimal',
+    'base32-check': 'Base32',
+    'base85-check': 'Base85'
+};
+
+// Updated compatibility check function
+function checkBase58Compatibility() {
+    const base58Checkbox = document.getElementById('base58-check');
+    
+    if (base58Checkbox.checked) {
+        // When Base58 is being checked, disable incompatible methods
+        for (const [id, name] of Object.entries(INCOMPATIBLE_METHODS)) {
+            const checkbox = document.getElementById(id);
+            checkbox.disabled = true;
+        }
+    } else {
+        // Enable all methods when Base58 is unchecked
+        for (const id of Object.keys(INCOMPATIBLE_METHODS)) {
+            const checkbox = document.getElementById(id);
+            checkbox.disabled = false;
+        }
+    }
+}
+
+// Initialize Base58 compatibility
+function initializeBase58Compatibility() {
+    // Event listeners for incompatible methods
+    for (const [id, name] of Object.entries(INCOMPATIBLE_METHODS)) {
+        document.getElementById(id).addEventListener('change', function() {
+            const base58Checkbox = document.getElementById('base58-check');
+            if (this.checked && base58Checkbox.checked) {
+                // If trying to check an incompatible method while Base58 is active
+                this.checked = false;
+                alert(`${name} encoding cannot be used while Base58 encoding is active. Please disable Base58 encoding first if you want to use ${name} encoding.`);
+                updateOutput();
+            }
+        });
+    }
+
+    // Base58 checkbox event listener
+    document.getElementById('base58-check').addEventListener('change', function() {
+        if (this.checked) {
+            // Check if any incompatible methods are already active
+            for (const [id, name] of Object.entries(INCOMPATIBLE_METHODS)) {
+                const checkbox = document.getElementById(id);
+                if (checkbox.checked) {
+                    // If an incompatible method is active, prevent Base58 from being checked
+                    this.checked = false;
+                    alert(`Base58 encoding cannot be enabled because ${name} encoding is already active. Please disable ${name} encoding first if you want to use Base58.`);
+                    return;
+                }
+            }
+        }
+        
+        // Update compatibility and UI
+        checkBase58Compatibility();
+        updateOutput();
+    });
+}
+
+// Event listeners (existing code continues here)
+elements.inputText.addEventListener('input', updateOutput);
+elements.copyButton.addEventListener('click', copyToClipboard);
+elements.resetButton.addEventListener('click', resetState);
 
 // Event listeners
 elements.inputText.addEventListener('input', updateOutput);
@@ -963,6 +1082,7 @@ function getCurrentMode() {
 const originalResetState = resetState;
 function resetState() {
     originalResetState();
+    checkBase58Compatibility();
     currentMode = 'encrypt';
     updateModeDisplay();
 }
@@ -1007,47 +1127,133 @@ importTokenButton.addEventListener('click', () => {
     input.click();
 });
 
-// Update the references in your existing code
-function getCurrentMode() {
-    return currentMode;
+function addProgressBar() {
+    const progressBar = document.createElement('div');
+    progressBar.id = 'progress-bar';
+    progressBar.style.cssText = `
+        width: 100%;
+        height: 4px;
+        background: #ddd;
+        margin: 10px 0;
+        display: none;
+    `;
+    
+    const progressIndicator = document.createElement('div');
+    progressIndicator.style.cssText = `
+        width: 0%;
+        height: 100%;
+        background: var(--primary-color);
+        transition: width 0.3s ease;
+    `;
+    progressBar.appendChild(progressIndicator);
+    
+    document.querySelector('.control-section').prepend(progressBar);
+    
+    return {
+        show: () => progressBar.style.display = 'block',
+        hide: () => progressBar.style.display = 'none',
+        update: (progress) => progressIndicator.style.width = `${progress}%`
+    };
+}
+
+function initializeCollapsibleSections() {
+    const groupBoxes = document.querySelectorAll('.group-box');
+    groupBoxes.forEach(box => {
+        const header = box.querySelector('h3');
+        if (header) {
+            header.addEventListener('click', () => {
+                box.classList.toggle('collapsed');
+                
+                // If section is being expanded, update output
+                if (!box.classList.contains('collapsed')) {
+                    updateOutput();
+                }
+            });
+        }
+    });
 }
 
 // Basic encryption methods
 function caesarCipher(text, shift, decrypt = false) {
     shift = parseInt(shift) || 3;
     if (decrypt) shift = 26 - shift;
-    return text.replace(/[a-zA-Z]/g, char => {
-        const code = char.charCodeAt(0);
-        const isUpperCase = char === char.toUpperCase();
-        const base = isUpperCase ? 65 : 97;
-        return String.fromCharCode(((code - base + shift) % 26) + base);
-    });
+    
+    // Pre-calculate shifted characters for better performance
+    const upperShiftMap = new Map();
+    const lowerShiftMap = new Map();
+    
+    for (let i = 0; i < 26; i++) {
+        const upperChar = String.fromCharCode(65 + i);
+        const lowerChar = String.fromCharCode(97 + i);
+        upperShiftMap.set(upperChar, String.fromCharCode(65 + ((i + shift) % 26)));
+        lowerShiftMap.set(lowerChar, String.fromCharCode(97 + ((i + shift) % 26)));
+    }
+
+    if (text.length < CHUNK_SIZE) {
+        return text.replace(/[a-zA-Z]/g, char => 
+            char === char.toUpperCase() ? 
+                upperShiftMap.get(char) : 
+                lowerShiftMap.get(char)
+        );
+    }
+
+    // Process in chunks for large strings
+    const chunks = [];
+    for (let i = 0; i < text.length; i += CHUNK_SIZE) {
+        chunks.push(text.slice(i, i + CHUNK_SIZE).replace(/[a-zA-Z]/g, char => 
+            char === char.toUpperCase() ? 
+                upperShiftMap.get(char) : 
+                lowerShiftMap.get(char)
+        ));
+    }
+    
+    return chunks.join('');
 }
 
 function vigenereCipher(text, key, decrypt = false) {
     if (!key) return text;
     key = key.toUpperCase().replace(/[^A-Z]/g, '');
     if (!key) return text;
-    let result = '';
-    let keyIndex = 0;
     
-    for (let i = 0; i < text.length; i++) {
-        if (text[i].match(/[a-zA-Z]/)) {
-            const isUpperCase = text[i] === text[i].toUpperCase();
-            const charCode = text[i].toUpperCase().charCodeAt(0) - 65;
-            const keyChar = key[keyIndex % key.length].charCodeAt(0) - 65;
-            let newChar = decrypt 
-                ? (charCode - keyChar + 26) % 26
-                : (charCode + keyChar) % 26;
-            newChar += 65;
-            result += isUpperCase 
-                ? String.fromCharCode(newChar)
-                : String.fromCharCode(newChar).toLowerCase();
-            keyIndex++;
-        } else {
-            result += text[i];
+    // Pre-calculate shift tables
+    const encryptShifts = new Array(26);
+    const decryptShifts = new Array(26);
+    for (let i = 0; i < 26; i++) {
+        encryptShifts[i] = new Map();
+        decryptShifts[i] = new Map();
+        for (let j = 0; j < 26; j++) {
+            const encryptedChar = String.fromCharCode(65 + ((j + i) % 26));
+            encryptShifts[i].set(String.fromCharCode(65 + j), encryptedChar);
+            decryptShifts[i].set(encryptedChar, String.fromCharCode(65 + j));
         }
     }
+
+    const shifts = decrypt ? decryptShifts : encryptShifts;
+    const keyLength = key.length;
+    let result = '';
+    let keyIndex = 0;
+
+    // Process in chunks
+    for (let i = 0; i < text.length; i += CHUNK_SIZE) {
+        const chunk = text.slice(i, Math.min(i + CHUNK_SIZE, text.length));
+        let chunkResult = '';
+        
+        for (let j = 0; j < chunk.length; j++) {
+            const char = chunk[j];
+            if (char.match(/[a-zA-Z]/)) {
+                const isUpperCase = char === char.toUpperCase();
+                const keyShift = key.charCodeAt(keyIndex % keyLength) - 65;
+                const shiftedChar = shifts[keyShift].get(char.toUpperCase());
+                chunkResult += isUpperCase ? shiftedChar : shiftedChar.toLowerCase();
+                keyIndex++;
+            } else {
+                chunkResult += char;
+            }
+        }
+        
+        result += chunkResult;
+    }
+
     return result;
 }
 
@@ -1061,25 +1267,43 @@ function atbashCipher(text) {
 }
 
 function reverseText(text) {
-    return text.split('').reverse().join('');
+    // For very small strings, use simple reverse
+    if (text.length < 1000) {
+        return text.split('').reverse().join('');
+    }
+    
+    // For larger strings, use an iterative approach
+    let result = '';
+    for (let i = text.length - 1; i >= 0; i--) {
+        result += text[i];
+        
+        // Yield periodically to avoid blocking
+        if (i % 10000 === 0 && typeof window.updateProgress === 'function') {
+            window.updateProgress('reverse', Math.floor(((text.length - i) / text.length) * 100));
+        }
+    }
+    
+    return result;
 }
 
 function morseEncode(text) {
-    return text.toUpperCase().split('').map(char => {
-        if (char === ' ') return '  ';
-        return morseCode[char] || char;
-    }).join(' ');
+    return text.toUpperCase()
+        .split('')
+        .map(char => morseCode[char] || char)
+        .join(' ')
+        .replace(/\s+/g, ' '); // Normalize spaces
 }
 
 function morseDecode(text) {
-    const reverseMorse = Object.fromEntries(
-        Object.entries(morseCode).map(([key, value]) => [value, key])
-    );
-    return text.split('  ').map(word => 
-        word.split(' ').map(char => 
-            reverseMorse[char] || char
-        ).join('')
-    ).join(' ').toLowerCase();
+    return text
+        .split('  ') // Split words
+        .map(word => 
+            word.split(' ')
+                .map(char => reverseMorse[char] || char)
+                .join('')
+        )
+        .join(' ')
+        .toLowerCase(); // Convert to lowercase for readability
 }
 
 function rot13(text) {
@@ -1133,113 +1357,292 @@ function unicodeUnescape(text) {
 
 // Binary encoding methods
 function binaryEncode(text) {
-    return text.split('').map(char => 
-        char.charCodeAt(0).toString(2).padStart(8, '0')
-    ).join(' ');
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(text);
+    const chunks = [];
+    
+    for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+        const chunk = bytes.slice(i, i + CHUNK_SIZE);
+        const binaryChunk = Array.from(chunk)
+            .map(byte => byte.toString(2).padStart(8, '0'))
+            .join('');
+        chunks.push(binaryChunk);
+    }
+    
+    return chunks.join('');
 }
 
 function binaryDecode(text) {
-    try {
-        return text.trim().split(' ').map(bin => 
-            String.fromCharCode(parseInt(bin, 2))
-        ).join('');
-    } catch (e) {
-        throw new Error('Invalid binary encoding');
+    const bytes = new Uint8Array(Math.ceil(text.length / 8));
+    let byteIndex = 0;
+    
+    for (let i = 0; i < text.length; i += 8) {
+        const byte = text.slice(i, i + 8);
+        bytes[byteIndex++] = parseInt(byte, 2);
     }
+    
+    return new TextDecoder().decode(bytes);
 }
 
-// Base58 encoding methods
-const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-
 function base58Encode(text) {
-    let bytes = new TextEncoder().encode(text);
-    let digits = [0];
+    // Convert text to bytes using TextEncoder
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(text);
     
-    for (let i = 0; i < bytes.length; i++) {
-        let carry = bytes[i];
-        for (let j = 0; j < digits.length; j++) {
-            carry += digits[j] << 8;
-            digits[j] = carry % 58;
-            carry = (carry / 58) | 0;
-        }
-        while (carry > 0) {
-            digits.push(carry % 58);
-            carry = (carry / 58) | 0;
-        }
+    // Count leading zeros
+    let zeros = 0;
+    while (zeros < bytes.length && bytes[zeros] === 0) {
+        zeros++;
     }
-
+    
+    // Convert to big integer
+    let value = 0n;
+    for (let i = zeros; i < bytes.length; i++) {
+        value = value * 256n + BigInt(bytes[i]);
+    }
+    
+    // Convert to base58 string
     let result = '';
-    for (let digit of digits) {
-        result = BASE58_ALPHABET[digit] + result;
+    while (value > 0n) {
+        const remainder = Number(value % 58n);
+        value = value / 58n;
+        result = BASE58_ALPHABET[remainder] + result;
     }
-    return result;
+    
+    // Add leading '1's for zero bytes (1 is used as it's the first character in base58)
+    result = '1'.repeat(zeros) + result;
+    
+    return result || '1';
 }
 
 function base58Decode(text) {
     try {
-        let bytes = [0];
-        for (let char of text) {
-            let value = BASE58_ALPHABET.indexOf(char);
-            if (value === -1) throw new Error('Invalid character');
-            
-            for (let i = 0; i < bytes.length; i++) {
-                bytes[i] *= 58;
-            }
-            bytes[0] += value;
-            
-            let carry = 0;
-            for (let i = 0; i < bytes.length; i++) {
-                bytes[i] += carry;
-                carry = bytes[i] >> 8;
-                bytes[i] &= 0xff;
-            }
-            while (carry > 0) {
-                bytes.push(carry & 0xff);
-                carry >>= 8;
-            }
+        // Count and verify leading '1's
+        let zeros = 0;
+        for (let i = 0; i < text.length && text[i] === '1'; i++) {
+            zeros++;
         }
+        
+        // Convert from base58 string to integer
+        let value = 0n;
+        for (const char of text.slice(zeros)) {
+            if (!(char in BASE58_MAPPING)) {
+                throw new Error(`Invalid Base58 character: ${char}`);
+            }
+            value = value * 58n + BigInt(BASE58_MAPPING[char]);
+        }
+        
+        // Convert to bytes
+        const bytes = [];
+        while (value > 0n) {
+            bytes.unshift(Number(value % 256n));
+            value = value / 256n;
+        }
+        
+        // Add leading zeros
+        for (let i = 0; i < zeros; i++) {
+            bytes.unshift(0);
+        }
+        
+        // Convert bytes back to text
         return new TextDecoder().decode(new Uint8Array(bytes));
     } catch (e) {
-        throw new Error('Invalid Base58 encoding');
+        throw new Error('Invalid Base58 encoding: ' + e.message);
     }
 }
 
+// Initialize Base58 compatibility
+function initializeBase58Compatibility() {
+    // Event listeners for incompatible methods
+    for (const [id, name] of Object.entries(INCOMPATIBLE_METHODS)) {
+        document.getElementById(id).addEventListener('change', function() {
+            const base58Checkbox = document.getElementById('base58-check');
+            if (this.checked && base58Checkbox.checked) {
+                // If trying to check an incompatible method while Base58 is active
+                this.checked = false;
+                alert(`${name} encoding cannot be used while Base58 encoding is active. Please disable Base58 encoding first if you want to use ${name} encoding.`);
+                updateOutput();
+            }
+        });
+    }
 
+    // Base58 checkbox event listener
+    document.getElementById('base58-check').addEventListener('change', function() {
+        if (this.checked) {
+            // Check if any incompatible methods are already active
+            for (const [id, name] of Object.entries(INCOMPATIBLE_METHODS)) {
+                const checkbox = document.getElementById(id);
+                if (checkbox.checked) {
+                    // If an incompatible method is active, prevent Base58 from being checked
+                    this.checked = false;
+                    alert(`Base58 encoding cannot be enabled because ${name} encoding is already active. Please disable ${name} encoding first if you want to use Base58.`);
+                    return;
+                }
+            }
+        }
+        
+        // Update compatibility and UI
+        checkBase58Compatibility();
+        updateOutput();
+    });
+}
+
+// Add checks for incompatible methods
+for (const [id, name] of Object.entries(INCOMPATIBLE_METHODS)) {
+    document.getElementById(id).addEventListener('change', function() {
+        const base58Checkbox = document.getElementById('base58-check');
+        if (this.checked && base58Checkbox.checked) {
+            base58Checkbox.checked = false;
+            alert(`Base58 encoding has been disabled because it cannot be combined with ${name} encoding.`);
+            // Re-enable all previously disabled methods
+            for (const otherId of Object.keys(INCOMPATIBLE_METHODS)) {
+                document.getElementById(otherId).disabled = false;
+            }
+        }
+    });
+}
+
+
+// Base85 (ASCII85) implementation
 function base85Encode(text) {
-    // This is a simplified Base85 implementation
-    const bytes = new TextEncoder().encode(text);
-    return btoa(String.fromCharCode(...bytes));
+    const encoder = new TextEncoder();
+    const data = encoder.encode(text);
+    let result = '';
+    
+    // Process 4 bytes at a time
+    for (let i = 0; i < data.length; i += 4) {
+        let chunk = data.slice(i, Math.min(i + 4, data.length));
+        
+        // Convert chunk to 32-bit integer
+        let value = 0;
+        for (let j = 0; j < chunk.length; j++) {
+            value = (value << 8) + chunk[j];
+        }
+        
+        // Convert to base-85
+        if (chunk.length < 4) {
+            value = value << (8 * (4 - chunk.length));
+        }
+        
+        // Convert to five ASCII85 characters
+        for (let j = 4; j >= 0; j--) {
+            const code = (value / Math.pow(85, j)) % 85;
+            result += String.fromCharCode(code + 33);
+        }
+    }
+    
+    return result;
 }
 
 function base85Decode(text) {
     try {
-        const decoded = atob(text);
-        return new TextDecoder().decode(new Uint8Array([...decoded].map(c => c.charCodeAt(0))));
+        const result = [];
+        
+        // Process 5 characters at a time
+        for (let i = 0; i < text.length; i += 5) {
+            let chunk = text.slice(i, Math.min(i + 5, text.length));
+            
+            // Convert from base-85 to integer
+            let value = 0;
+            for (let j = 0; j < chunk.length; j++) {
+                value = value * 85 + (chunk.charCodeAt(j) - 33);
+            }
+            
+            // Convert to bytes
+            for (let j = 3; j >= 0; j--) {
+                result.push((value >> (j * 8)) & 0xFF);
+            }
+        }
+        
+        return new TextDecoder().decode(new Uint8Array(result));
     } catch (e) {
         throw new Error('Invalid Base85 encoding');
     }
 }
 
 function base64Encode(text) {
-    return btoa(text);
+    // Use TextEncoder for proper UTF-8 handling
+    const encoder = new TextEncoder();
+    const data = encoder.encode(text);
+    
+    // Convert to base64 and make URL-safe
+    const base64 = btoa(String.fromCharCode(...data))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_');
+    
+    return base64;
 }
 
 function base64Decode(text) {
     try {
-        return atob(text);
+        // Restore standard base64 characters
+        const standardBase64 = text
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+        
+        // Decode base64
+        const binaryStr = atob(standardBase64);
+        
+        // Convert to Uint8Array
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) {
+            bytes[i] = binaryStr.charCodeAt(i);
+        }
+        
+        // Decode UTF-8
+        return new TextDecoder().decode(bytes);
     } catch (e) {
         throw new Error('Invalid Base64 encoding');
     }
 }
 
 function base32Encode(text) {
-    // Simplified Base32 implementation
-    return btoa(text).replace(/=/g, '');
+    const encoder = new TextEncoder();
+    const data = encoder.encode(text);
+    let bits = '';
+    let base32 = '';
+    
+    // Convert to binary
+    for (const byte of data) {
+        bits += byte.toString(2).padStart(8, '0');
+    }
+    
+    // Pad to multiple of 5
+    const padding = (5 - (bits.length % 5)) % 5;
+    bits += '0'.repeat(padding);
+    
+    // Convert 5 bits at a time
+    for (let i = 0; i < bits.length; i += 5) {
+        const chunk = bits.slice(i, i + 5);
+        base32 += BASE32_ALPHABET[parseInt(chunk, 2)];
+    }
+    
+    // Add padding if necessary
+    const padLength = (8 - (base32.length % 8)) % 8;
+    return base32 + '='.repeat(padLength);
 }
 
 function base32Decode(text) {
     try {
-        return atob(text.padEnd(text.length + (text.length % 8), '='));
+        // Remove padding and whitespace
+        text = text.replace(/=+$/, '').replace(/\s/g, '');
+        
+        let bits = '';
+        // Convert each character to 5 bits
+        for (const char of text.toUpperCase()) {
+            if (!(char in BASE32_MAPPING)) {
+                throw new Error(`Invalid Base32 character: ${char}`);
+            }
+            bits += BASE32_MAPPING[char].toString(2).padStart(5, '0');
+        }
+        
+        // Convert 8 bits at a time to bytes
+        const bytes = new Uint8Array(Math.floor(bits.length / 8));
+        for (let i = 0; i < bytes.length; i++) {
+            bytes[i] = parseInt(bits.slice(i * 8, (i + 1) * 8), 2);
+        }
+        
+        return new TextDecoder().decode(bytes);
     } catch (e) {
         throw new Error('Invalid Base32 encoding');
     }
@@ -1257,39 +1660,91 @@ function hexDecode(text) {
     }
 }
 
+function getEnabledOperationsCount() {
+    return Object.values(encryptionMethods).filter(method => 
+        method && method.type === 'checkbox' && method.checked
+    ).length;
+}
+
+function updateProgressIfLarge(isLargeInput, currentOperation, totalOperations) {
+    if (isLargeInput) {
+        const progressPercent = Math.round((currentOperation / totalOperations) * 100);
+        progress.update(progressPercent);
+    }
+}
+
 // Advanced encryption methods
 async function aesEncrypt(text, password) {
-    if (!password) throw new Error('AES password required');
+    if (!text || !password) throw new Error('Text and password required');
+    
+    // Use smaller chunks for encryption to avoid memory issues
+    const SAFE_CHUNK_SIZE = 5000;
+    
     const salt = CryptoJS.lib.WordArray.random(128/8);
     const key = CryptoJS.PBKDF2(password, salt, {
         keySize: 256/32,
         iterations: 1000
     });
     const iv = CryptoJS.lib.WordArray.random(128/8);
-    const encrypted = CryptoJS.AES.encrypt(text, key, { 
-        iv: iv,
-        mode: CryptoJS.mode.CBC,
-        padding: CryptoJS.pad.Pkcs7
-    });
-    return salt.toString() + iv.toString() + encrypted.toString();
-}
-
-async function aesDecrypt(text, password) {
-    if (!password) throw new Error('AES password required');
-    try {
-        const salt = CryptoJS.enc.Hex.parse(text.substr(0, 32));
-        const iv = CryptoJS.enc.Hex.parse(text.substr(32, 32));
-        const encrypted = text.substring(64);
-        const key = CryptoJS.PBKDF2(password, salt, {
-            keySize: 256/32,
-            iterations: 1000
-        });
-        const decrypted = CryptoJS.AES.decrypt(encrypted, key, { 
+    
+    // Process text in smaller chunks
+    let result = salt.toString() + iv.toString();
+    
+    for (let i = 0; i < text.length; i += SAFE_CHUNK_SIZE) {
+        const chunk = text.slice(i, Math.min(i + SAFE_CHUNK_SIZE, text.length));
+        const encrypted = CryptoJS.AES.encrypt(chunk, key, { 
             iv: iv,
             mode: CryptoJS.mode.CBC,
             padding: CryptoJS.pad.Pkcs7
         });
-        return decrypted.toString(CryptoJS.enc.Utf8);
+        result += encrypted.toString();
+        
+        // Update progress periodically
+        if (typeof window.updateProgress === 'function') {
+            window.updateProgress('encrypt', Math.floor((i / text.length) * 100));
+        }
+        
+        // Allow other operations to process
+        await new Promise(resolve => setTimeout(resolve, 0));
+    }
+    
+    return result;
+}
+
+async function aesDecrypt(text, password) {
+    if (!text || !password) throw new Error('Text and password required');
+    
+    try {
+        const salt = CryptoJS.enc.Hex.parse(text.substr(0, 32));
+        const iv = CryptoJS.enc.Hex.parse(text.substr(32, 32));
+        const encrypted = text.substring(64);
+        
+        const key = CryptoJS.PBKDF2(password, salt, {
+            keySize: 256/32,
+            iterations: 1000
+        });
+        
+        // Process in chunks
+        const chunkSize = CHUNK_SIZE;
+        const chunks = [];
+        
+        for (let i = 0; i < encrypted.length; i += chunkSize) {
+            const chunk = encrypted.slice(i, i + chunkSize);
+            const decrypted = CryptoJS.AES.decrypt(chunk, key, { 
+                iv: iv,
+                mode: CryptoJS.mode.CBC,
+                padding: CryptoJS.pad.Pkcs7
+            });
+            chunks.push(decrypted.toString(CryptoJS.enc.Utf8));
+            
+            // Update progress
+            const progress = Math.min(100, Math.round((i + chunkSize) / encrypted.length * 100));
+            if (window.updateProgress) {
+                window.updateProgress('decrypt', progress);
+            }
+        }
+        
+        return chunks.join('');
     } catch (e) {
         throw new Error('AES decryption failed');
     }
@@ -1306,7 +1761,343 @@ async function chachaDecrypt(text, password) {
     return aesDecrypt(text, password); // Fallback to AES for demo
 }
 
-// Main encryption/decryption chain
+async function processLargeString(text, processor, chunkSize = SAFE_CHUNK_SIZE) {
+    if (text.length < chunkSize) {
+        return processor(text);
+    }
+    
+    let result = '';
+    for (let i = 0; i < text.length; i += chunkSize) {
+        const chunk = text.slice(i, Math.min(i + chunkSize, text.length));
+        result += processor(chunk);
+        
+        // Yield to prevent blocking
+        if (i % (chunkSize * 10) === 0) {
+            await new Promise(resolve => setTimeout(resolve, 0));
+            if (typeof window.updateProgress === 'function') {
+                window.updateProgress('process', Math.floor((i / text.length) * 100));
+            }
+        }
+    }
+    return result;
+}
+
+// Performance optimized crypto functions
+// Utility function to process large strings safely
+async function processLargeString(text, processor, chunkSize = 5000) {
+    if (text.length < chunkSize) {
+        return processor(text);
+    }
+    
+    let result = '';
+    for (let i = 0; i < text.length; i += chunkSize) {
+        const chunk = text.slice(i, Math.min(i + chunkSize, text.length));
+        result += processor(chunk);
+        
+        // Yield to prevent blocking
+        if (i % (chunkSize * 10) === 0) {
+            await new Promise(resolve => setTimeout(resolve, 0));
+            if (typeof window.updateProgress === 'function') {
+                window.updateProgress('process', Math.floor((i / text.length) * 100));
+            }
+        }
+    }
+    return result;
+}
+
+// Optimized string reversal using array chunking
+function reverseText(text) {
+    // For very small strings, use simple reverse
+    if (text.length < 1000) {
+        return text.split('').reverse().join('');
+    }
+    
+    // For larger strings, use an iterative approach
+    let result = '';
+    for (let i = text.length - 1; i >= 0; i--) {
+        result += text[i];
+        
+        // Yield periodically to avoid blocking
+        if (i % 10000 === 0 && typeof window.updateProgress === 'function') {
+            window.updateProgress('reverse', Math.floor(((text.length - i) / text.length) * 100));
+        }
+    }
+    
+    return result;
+}
+
+// Optimized caesar cipher using charCode caching
+function caesarCipher(text, shift, decrypt = false) {
+    shift = parseInt(shift) || 3;
+    if (decrypt) shift = 26 - shift;
+    
+    // Pre-calculate shifted characters for better performance
+    const upperShiftMap = new Map();
+    const lowerShiftMap = new Map();
+    
+    for (let i = 0; i < 26; i++) {
+        const upperChar = String.fromCharCode(65 + i);
+        const lowerChar = String.fromCharCode(97 + i);
+        upperShiftMap.set(upperChar, String.fromCharCode(65 + ((i + shift) % 26)));
+        lowerShiftMap.set(lowerChar, String.fromCharCode(97 + ((i + shift) % 26)));
+    }
+
+    if (text.length < CHUNK_SIZE) {
+        return text.replace(/[a-zA-Z]/g, char => 
+            char === char.toUpperCase() ? 
+                upperShiftMap.get(char) : 
+                lowerShiftMap.get(char)
+        );
+    }
+
+    // Process in chunks for large strings
+    const chunks = [];
+    for (let i = 0; i < text.length; i += CHUNK_SIZE) {
+        chunks.push(text.slice(i, i + CHUNK_SIZE).replace(/[a-zA-Z]/g, char => 
+            char === char.toUpperCase() ? 
+                upperShiftMap.get(char) : 
+                lowerShiftMap.get(char)
+        ));
+    }
+    
+    return chunks.join('');
+}
+
+// Optimized Vigenère cipher using pre-calculated shift tables
+function vigenereCipher(text, key, decrypt = false) {
+    if (!key) return text;
+    key = key.toUpperCase().replace(/[^A-Z]/g, '');
+    if (!key) return text;
+    
+    // Pre-calculate shift tables
+    const encryptShifts = new Array(26);
+    const decryptShifts = new Array(26);
+    for (let i = 0; i < 26; i++) {
+        encryptShifts[i] = new Map();
+        decryptShifts[i] = new Map();
+        for (let j = 0; j < 26; j++) {
+            const encryptedChar = String.fromCharCode(65 + ((j + i) % 26));
+            encryptShifts[i].set(String.fromCharCode(65 + j), encryptedChar);
+            decryptShifts[i].set(encryptedChar, String.fromCharCode(65 + j));
+        }
+    }
+
+    const shifts = decrypt ? decryptShifts : encryptShifts;
+    const keyLength = key.length;
+    let result = '';
+    let keyIndex = 0;
+
+    // Process in chunks
+    for (let i = 0; i < text.length; i += CHUNK_SIZE) {
+        const chunk = text.slice(i, Math.min(i + CHUNK_SIZE, text.length));
+        let chunkResult = '';
+        
+        for (let j = 0; j < chunk.length; j++) {
+            const char = chunk[j];
+            if (char.match(/[a-zA-Z]/)) {
+                const isUpperCase = char === char.toUpperCase();
+                const keyShift = key.charCodeAt(keyIndex % keyLength) - 65;
+                const shiftedChar = shifts[keyShift].get(char.toUpperCase());
+                chunkResult += isUpperCase ? shiftedChar : shiftedChar.toLowerCase();
+                keyIndex++;
+            } else {
+                chunkResult += char;
+            }
+        }
+        
+        result += chunkResult;
+    }
+
+    return result;
+}
+
+// Optimized binary encoding using TypedArrays
+function binaryEncode(text) {
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(text);
+    const chunks = [];
+    
+    for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+        const chunk = bytes.slice(i, i + CHUNK_SIZE);
+        const binaryChunk = Array.from(chunk)
+            .map(byte => byte.toString(2).padStart(8, '0'))
+            .join('');
+        chunks.push(binaryChunk);
+    }
+    
+    return chunks.join('');
+}
+
+function binaryDecode(text) {
+    const bytes = new Uint8Array(Math.ceil(text.length / 8));
+    let byteIndex = 0;
+    
+    for (let i = 0; i < text.length; i += 8) {
+        const byte = text.slice(i, i + 8);
+        bytes[byteIndex++] = parseInt(byte, 2);
+    }
+    
+    return new TextDecoder().decode(bytes);
+}
+
+// Optimized base64 handling using native browser APIs and chunks
+function base64Encode(text) {
+    // Use smaller chunks to avoid call stack issues
+    const SAFE_CHUNK_SIZE = 10000;
+    
+    if (text.length < SAFE_CHUNK_SIZE) {
+        return btoa(text);
+    }
+    
+    let result = '';
+    for (let i = 0; i < text.length; i += SAFE_CHUNK_SIZE) {
+        const chunk = text.slice(i, Math.min(i + SAFE_CHUNK_SIZE, text.length));
+        result += btoa(chunk);
+        
+        // Periodic progress updates
+        if (typeof window.updateProgress === 'function') {
+            window.updateProgress('base64', Math.floor((i / text.length) * 100));
+        }
+    }
+}
+
+function base64Decode(text) {
+    if (text.length < CHUNK_SIZE) {
+        return atob(text);
+    }
+    
+    // Calculate chunk size that's a multiple of 4 for base64
+    const adjustedChunkSize = CHUNK_SIZE - (CHUNK_SIZE % 4);
+    const chunks = [];
+    
+    for (let i = 0; i < text.length; i += adjustedChunkSize) {
+        chunks.push(atob(text.slice(i, i + adjustedChunkSize)));
+    }
+    return chunks.join('');
+}
+
+// Optimized AES encryption with streaming and progress tracking
+async function aesEncrypt(text, password) {
+    if (!text || !password) throw new Error('Text and password required');
+    
+    // Use smaller chunks for encryption to avoid memory issues
+    const SAFE_CHUNK_SIZE = 5000;
+    
+    const salt = CryptoJS.lib.WordArray.random(128/8);
+    const key = CryptoJS.PBKDF2(password, salt, {
+        keySize: 256/32,
+        iterations: 1000
+    });
+    const iv = CryptoJS.lib.WordArray.random(128/8);
+    
+    // Process text in smaller chunks
+    let result = salt.toString() + iv.toString();
+    
+    for (let i = 0; i < text.length; i += SAFE_CHUNK_SIZE) {
+        const chunk = text.slice(i, Math.min(i + SAFE_CHUNK_SIZE, text.length));
+        const encrypted = CryptoJS.AES.encrypt(chunk, key, { 
+            iv: iv,
+            mode: CryptoJS.mode.CBC,
+            padding: CryptoJS.pad.Pkcs7
+        });
+        result += encrypted.toString();
+        
+        // Update progress periodically
+        if (typeof window.updateProgress === 'function') {
+            window.updateProgress('encrypt', Math.floor((i / text.length) * 100));
+        }
+        
+        // Allow other operations to process
+        await new Promise(resolve => setTimeout(resolve, 0));
+    }
+    
+    return result;
+}
+
+async function aesDecrypt(text, password) {
+    if (!text || !password) throw new Error('Text and password required');
+    
+    try {
+        const salt = CryptoJS.enc.Hex.parse(text.substr(0, 32));
+        const iv = CryptoJS.enc.Hex.parse(text.substr(32, 32));
+        const encrypted = text.substring(64);
+        
+        const key = CryptoJS.PBKDF2(password, salt, {
+            keySize: 256/32,
+            iterations: 1000
+        });
+        
+        // Process in chunks
+        const chunkSize = CHUNK_SIZE;
+        const chunks = [];
+        
+        for (let i = 0; i < encrypted.length; i += chunkSize) {
+            const chunk = encrypted.slice(i, i + chunkSize);
+            const decrypted = CryptoJS.AES.decrypt(chunk, key, { 
+                iv: iv,
+                mode: CryptoJS.mode.CBC,
+                padding: CryptoJS.pad.Pkcs7
+            });
+            chunks.push(decrypted.toString(CryptoJS.enc.Utf8));
+            
+            // Update progress
+            const progress = Math.min(100, Math.round((i + chunkSize) / encrypted.length * 100));
+            if (window.updateProgress) {
+                window.updateProgress('decrypt', progress);
+            }
+        }
+        
+        return chunks.join('');
+    } catch (e) {
+        throw new Error('AES decryption failed');
+    }
+}
+
+// Add progress bar UI element
+function addProgressBar() {
+    const progressBar = document.createElement('div');
+    progressBar.id = 'progress-bar';
+    progressBar.style.cssText = `
+        width: 100%;
+        height: 4px;
+        background: #ddd;
+        margin: 10px 0;
+        display: none;
+    `;
+    
+    const progressIndicator = document.createElement('div');
+    progressIndicator.style.cssText = `
+        width: 0%;
+        height: 100%;
+        background: var(--primary-color);
+        transition: width 0.3s ease;
+    `;
+    progressBar.appendChild(progressIndicator);
+    
+    document.querySelector('.control-section').prepend(progressBar);
+    
+    return {
+        show: () => progressBar.style.display = 'block',
+        hide: () => progressBar.style.display = 'none',
+        update: (progress) => progressIndicator.style.width = `${progress}%`
+    };
+}
+
+// Helper functions for progress tracking
+function getEnabledOperationsCount() {
+    return Object.values(encryptionMethods).filter(method => 
+        method && method.type === 'checkbox' && method.checked
+    ).length;
+}
+
+function updateProgressIfLarge(isLargeInput, currentOperation, totalOperations) {
+    if (isLargeInput) {
+        const progressPercent = Math.round((currentOperation / totalOperations) * 100);
+        progress.update(progressPercent);
+    }
+}
+
+// Update the main updateOutput function to handle chunked processing
 async function updateOutput() {
     let text = elements.inputText.value;
     if (!text) {
@@ -1318,19 +2109,37 @@ async function updateOutput() {
 
     const isEncrypt = currentMode === 'encrypt';
     const chain = [];
+    const isLargeInput = text.length > CHUNK_SIZE;
+
+    if (isLargeInput) {
+        progress.show();
+        progress.update(0);
+    }
 
     try {
+        // Track progress for each operation
+        const totalOperations = getEnabledOperationsCount();
+        let currentOperation = 0;
+
         if (isEncrypt) {
-            // Basic encryption methods
+            // Basic text transformations
+            if (encryptionMethods.reverse.checked) {
+                text = reverseText(text);
+                chain.push('Text Reversal');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
+            }
+
             if (encryptionMethods.caesar.checked) {
                 const shift = encryptionMethods.caesarShift.value || '3';
                 text = caesarCipher(text, shift);
                 chain.push(`Caesar Cipher (shift=${shift})`);
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
             }
 
             if (encryptionMethods.rot13.checked) {
                 text = rot13(text);
                 chain.push('ROT13');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
             }
 
             if (encryptionMethods.vigenere.checked) {
@@ -1338,140 +2147,165 @@ async function updateOutput() {
                 if (!key) throw new Error('Vigenère key required');
                 text = vigenereCipher(text, key);
                 chain.push(`Vigenère Cipher (key=${key})`);
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
             }
 
             if (encryptionMethods.atbash.checked) {
                 text = atbashCipher(text);
                 chain.push('Atbash Cipher');
-            }
-
-            if (encryptionMethods.reverse.checked) {
-                text = reverseText(text);
-                chain.push('Text Reversal');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
             }
 
             if (encryptionMethods.morse.checked) {
                 text = morseEncode(text);
                 chain.push('Morse Code');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
             }
 
-            // Advanced encryption
-            if (encryptionMethods.aes.checked) {
-                text = await aesEncrypt(text, encryptionMethods.aesKey.value);
-                chain.push('AES-256 Encryption');
-            }
-
-            if (encryptionMethods.chacha.checked) {
-                text = await chachaEncrypt(text, encryptionMethods.chachaKey.value);
-                chain.push('ChaCha20-Poly1305 Encryption');
-            }
-
-            // Encoding methods
-            if (encryptionMethods.url.checked) {
-                text = urlEncode(text);
-                chain.push('URL Encoding');
-            }
-
+            // Text encodings
             if (encryptionMethods.unicode.checked) {
                 text = unicodeEscape(text);
                 chain.push('Unicode Escape');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
             }
 
-            if (encryptionMethods.binary.checked) {
-                text = binaryEncode(text);
-                chain.push('Binary Encoding');
+            if (encryptionMethods.url.checked) {
+                text = urlEncode(text);
+                chain.push('URL Encoding');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
             }
 
-            if (encryptionMethods.base85.checked) {
-                text = base85Encode(text);
-                chain.push('Base85 Encoding');
+            // Encryption
+            if (encryptionMethods.chacha.checked) {
+                const key = encryptionMethods.chachaKey.value;
+                if (!key) throw new Error('ChaCha key required');
+                text = await chachaEncrypt(text, key);
+                chain.push('ChaCha20-Poly1305 Encryption');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
             }
 
+            if (encryptionMethods.aes.checked) {
+                const key = encryptionMethods.aesKey.value;
+                if (!key) throw new Error('AES key required');
+                text = await aesEncrypt(text, key);
+                chain.push('AES-256 Encryption');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
+            }
+
+            // Binary-safe encodings
             if (encryptionMethods.base64.checked) {
                 text = base64Encode(text);
                 chain.push('Base64 Encoding');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
             }
 
             if (encryptionMethods.base58.checked) {
                 text = base58Encode(text);
                 chain.push('Base58 Encoding');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
+            }
+
+            if (encryptionMethods.base85.checked) {
+                text = base85Encode(text);
+                chain.push('Base85 Encoding');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
             }
 
             if (encryptionMethods.base32.checked) {
                 text = base32Encode(text);
                 chain.push('Base32 Encoding');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
             }
 
             if (encryptionMethods.hex.checked) {
                 text = hexEncode(text);
                 chain.push('Hexadecimal Encoding');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
+            }
+
+            if (encryptionMethods.binary.checked) {
+                text = binaryEncode(text);
+                chain.push('Binary Encoding');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
             }
 
         } else {
-            // Decryption in reverse order
+            // Decryption (reverse order)
+            
+            if (encryptionMethods.binary.checked) {
+                text = binaryDecode(text);
+                chain.push('Binary Decoding');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
+            }
+
             if (encryptionMethods.hex.checked) {
                 text = hexDecode(text);
                 chain.push('Hexadecimal Decoding');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
             }
 
             if (encryptionMethods.base32.checked) {
                 text = base32Decode(text);
                 chain.push('Base32 Decoding');
-            }
-
-            if (encryptionMethods.base58.checked) {
-                text = base58Decode(text);
-                chain.push('Base58 Decoding');
-            }
-
-            if (encryptionMethods.base64.checked) {
-                text = base64Decode(text);
-                chain.push('Base64 Decoding');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
             }
 
             if (encryptionMethods.base85.checked) {
                 text = base85Decode(text);
                 chain.push('Base85 Decoding');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
             }
 
-            if (encryptionMethods.binary.checked) {
-                text = binaryDecode(text);
-                chain.push('Binary Decoding');
+            if (encryptionMethods.base58.checked) {
+                text = base58Decode(text);
+                chain.push('Base58 Decoding');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
             }
 
-            if (encryptionMethods.unicode.checked) {
-                text = unicodeUnescape(text);
-                chain.push('Unicode Unescape');
+            if (encryptionMethods.base64.checked) {
+                text = base64Decode(text);
+                chain.push('Base64 Decoding');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
+            }
+
+            if (encryptionMethods.aes.checked) {
+                const key = encryptionMethods.aesKey.value;
+                if (!key) throw new Error('AES key required');
+                text = await aesDecrypt(text, key);
+                chain.push('AES-256 Decryption');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
+            }
+
+            if (encryptionMethods.chacha.checked) {
+                const key = encryptionMethods.chachaKey.value;
+                if (!key) throw new Error('ChaCha key required');
+                text = await chachaDecrypt(text, key);
+                chain.push('ChaCha20-Poly1305 Decryption');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
             }
 
             if (encryptionMethods.url.checked) {
                 text = urlDecode(text);
                 chain.push('URL Decoding');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
             }
 
-            if (encryptionMethods.chacha.checked) {
-                text = await chachaDecrypt(text, encryptionMethods.chachaKey.value);
-                chain.push('ChaCha20-Poly1305 Decryption');
-            }
-
-            if (encryptionMethods.aes.checked) {
-                text = await aesDecrypt(text, encryptionMethods.aesKey.value);
-                chain.push('AES-256 Decryption');
+            if (encryptionMethods.unicode.checked) {
+                text = unicodeUnescape(text);
+                chain.push('Unicode Unescape');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
             }
 
             if (encryptionMethods.morse.checked) {
                 text = morseDecode(text);
                 chain.push('Morse Code Decoding');
-            }
-
-            if (encryptionMethods.reverse.checked) {
-                text = reverseText(text);
-                chain.push('Text Reversal');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
             }
 
             if (encryptionMethods.atbash.checked) {
                 text = atbashCipher(text);
                 chain.push('Atbash Cipher');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
             }
 
             if (encryptionMethods.vigenere.checked) {
@@ -1479,38 +2313,69 @@ async function updateOutput() {
                 if (!key) throw new Error('Vigenère key required');
                 text = vigenereCipher(text, key, true);
                 chain.push(`Vigenère Cipher (key=${key})`);
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
             }
 
             if (encryptionMethods.rot13.checked) {
                 text = rot13(text);
                 chain.push('ROT13');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
             }
 
             if (encryptionMethods.caesar.checked) {
                 const shift = encryptionMethods.caesarShift.value || '3';
                 text = caesarCipher(text, shift, true);
                 chain.push(`Caesar Cipher (shift=${shift})`);
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
+            }
+
+            if (encryptionMethods.reverse.checked) {
+                text = reverseText(text);
+                chain.push('Text Reversal');
+                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
             }
         }
 
-        elements.outputText.value = text;
+        // Update output in chunks if necessary
+        if (isLargeInput) {
+            const chunks = [];
+            for (let i = 0; i < text.length; i += CHUNK_SIZE) {
+                chunks.push(text.slice(i, i + CHUNK_SIZE));
+                progress.update(Math.min(100, Math.round((i + CHUNK_SIZE) / text.length * 100)));
+            }
+            elements.outputText.value = chunks.join('');
+        } else {
+            elements.outputText.value = text;
+        }
 
         // Update chain display
         if (chain.length > 0) {
-            const chainText = `${isEncrypt ? 'Encryption' : 'Decryption'} Steps:\n` +
-                chain.map((step, i) => `${i + 1}. ${step}`).join('\n');
+            const chainText = `${isEncrypt ? 'Encryption' : 'Decryption'} Chain:\n` +
+                chain.map((step, i) => `${i + 1}. ${step}`).join('\n') +
+                '\n\nNote: Methods are applied in ' + 
+                (isEncrypt ? 'forward' : 'reverse') + ' order for proper ' +
+                (isEncrypt ? 'encryption' : 'decryption');
             elements.chainDisplay.innerHTML = chainText;
         } else {
-            elements.chainDisplay.innerHTML = `No ${isEncrypt ? 'encryption' : 'decryption'} applied`;
+            elements.chainDisplay.innerHTML = `No ${isEncrypt ? 'encryption' : 'decryption'} methods applied`;
         }
+
     } catch (e) {
         elements.outputText.value = `Error: ${e.message}`;
-        elements.chainDisplay.innerHTML = `Error occurred during ${isEncrypt ? 'encryption' : 'decryption'}`;
+        elements.chainDisplay.innerHTML = 
+            `Error occurred during ${isEncrypt ? 'encryption' : 'decryption'}:\n` +
+            `${e.message}\n\n` +
+            'Tip: When combining multiple methods, ensure they are compatible ' +
+            'and check that all required keys/parameters are provided.';
     }
 
+    if (isLargeInput) {
+        progress.hide();
+    }
     updateCounters();
 }
 
+// Helper function to update character counters
 function updateCounters() {
     elements.inputCounter.textContent = `(${elements.inputText.value.length} chars)`;
     elements.outputCounter.textContent = `(${elements.outputText.value.length} chars)`;
@@ -1749,26 +2614,25 @@ window.addEventListener('click', (event) => {
     }
 });
 
-function toggleSection(element) {
-    element.classList.toggle('collapsed');
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize the mode display
+    updateModeDisplay();
     
-    // Ensure elements are properly initialized after expanding
-    if (!element.classList.contains('collapsed')) {
-        updateOutput();
-    }
-}
-
-// Initialize event listeners for group-box headers
-document.querySelectorAll('.group-box h3').forEach(header => {
-    header.addEventListener('click', (e) => {
-        // Prevent this click from triggering other event listeners
-        e.stopPropagation();
-        toggleSection(header.parentElement);
-    });
+    // Initialize collapsible sections
+    initializeCollapsibleSections();
+    
+    // Initialize Base58 compatibility
+    initializeBase58Compatibility();
+    
+    // Initialize the layout
+    updateLayout();
+    
+    // Check initial Base58 compatibility state
+    checkBase58Compatibility();
+    
+    // Initial update of output
+    updateOutput();
 });
-
-// Initialize the application
-updateMode();
 
         // Mobile-specific functionality
         if ('ontouchstart' in window) {
