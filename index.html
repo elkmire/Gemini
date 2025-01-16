@@ -171,6 +171,60 @@ body {
     text-shadow: 0 0 5px var(--accent-color);
 }
 
+.mode-toggle {
+    position: relative;
+    width: 200px;
+    height: 48px;
+    border: 2px solid var(--border-color);
+    background: var(--secondary-bg);
+    border-radius: 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 0 auto 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: var(--text-font-size);
+    font-weight: var(--font-weight-bold);
+}
+
+.mode-toggle .mode-text {
+    position: relative;
+    z-index: 2;
+    transition: all 0.3s ease;
+}
+
+.mode-toggle .mode-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--primary-color);
+    opacity: 0.1;
+    transition: all 0.3s ease;
+}
+
+.mode-toggle.encrypt-mode {
+    color: rgb(255, 51, 51);
+    border-color: rgb(255, 51, 51);
+}
+
+.mode-toggle.decrypt-mode {
+    color: rgb(0, 204, 255);
+    border-color: rgb(0, 204, 255);
+}
+
+.mode-toggle:hover .mode-indicator {
+    opacity: 0.2;
+}
+
+.mode-toggle:active .mode-indicator {
+    opacity: 0.3;
+}
+
 /* Checkbox Container Styles */
 .checkbox-container {
     display: flex;
@@ -553,6 +607,12 @@ button:focus {
         gap: 10px;
     }
 
+    .mode-toggle {
+        width: 180px;
+        height: 44px;
+        font-size: calc(var(--text-font-size) * 0.9);
+    }
+
     .key-input, .cipher-input {
         flex-direction: column;
         align-items: stretch;
@@ -633,10 +693,10 @@ button:focus {
 
         <div class="control-section">
             <div class="mode-selector">
-                <select id="mode-select">
-                    <option value="encrypt" style="color: #ff0000;">Encrypt</option>
-                    <option value="decrypt" style="color: #00ffff;">Decrypt</option>
-                </select>
+                <button id="mode-toggle" class="mode-toggle encrypt-mode">
+                    <span class="mode-text">ENCRYPT</span>
+                    <div class="mode-indicator"></div>
+                </button>
                 <div class="config-buttons">
                     <button id="load-config">Load Config</button>
                     <p>CHECK MODE</p>
@@ -789,7 +849,6 @@ button:focus {
         const elements = {
             inputText: document.getElementById('input-text'),
             outputText: document.getElementById('output-text'),
-            modeSelect: document.getElementById('mode-select'),
             chainDisplay: document.getElementById('chain-display'),
             inputCounter: document.getElementById('input-counter'),
             outputCounter: document.getElementById('output-counter'),
@@ -839,7 +898,6 @@ button:focus {
 
 // Event listeners
 elements.inputText.addEventListener('input', updateOutput);
-elements.modeSelect.addEventListener('change', updateMode);
 elements.copyButton.addEventListener('click', copyToClipboard);
 elements.resetButton.addEventListener('click', resetState);
 
@@ -853,25 +911,60 @@ Object.values(encryptionMethods).forEach(element => {
     }
 });
 
-// Add this line here, after the event listeners are initialized
-document.body.setAttribute('data-mode', elements.modeSelect.value);
-
 function updateTokenButtons() {
-    const isEncrypt = elements.modeSelect.value === 'encrypt';
+    const isEncrypt = currentMode === 'encrypt';
     createTokenButton.style.display = isEncrypt ? 'inline-block' : 'none';
     importTokenButton.style.display = isEncrypt ? 'none' : 'inline-block';
 }
 
-function updateMode() {
-    const isEncrypt = elements.modeSelect.value === 'encrypt';
-    elements.modeSelect.className = isEncrypt ? 'encrypt-mode' : 'decrypt-mode';
-    document.body.setAttribute('data-mode', elements.modeSelect.value); // Add this line
-    elements.inputText.placeholder = isEncrypt ? "Enter message to encrypt..." : "Enter message to decrypt...";
-    elements.outputText.placeholder = isEncrypt ? "Encrypted message will appear here..." : "Decrypted message will appear here...";
-    elements.chainDisplay.innerHTML = isEncrypt ? "Encryption chain will appear here..." : "Decryption chain will appear here...";
-    elements.copyButton.textContent = isEncrypt ? "Copy Encrypted Message" : "Copy Decrypted Message";
-    updateTokenButtons();
+// Remove the existing mode select element reference and add the new toggle
+const modeToggle = document.getElementById('mode-toggle');
+const modeText = modeToggle.querySelector('.mode-text');
+
+// Initialize the mode
+let currentMode = 'encrypt';
+updateModeDisplay();
+
+// Add click event listener to toggle button
+modeToggle.addEventListener('click', () => {
+    currentMode = currentMode === 'encrypt' ? 'decrypt' : 'encrypt';
+    updateModeDisplay();
     updateOutput();
+});
+
+function updateModeDisplay() {
+    modeToggle.className = `mode-toggle ${currentMode}-mode`;
+    modeText.textContent = currentMode.toUpperCase();
+    document.body.setAttribute('data-mode', currentMode);
+    
+    // Update placeholders and other text
+    elements.inputText.placeholder = currentMode === 'encrypt' 
+        ? "Enter message to encrypt..." 
+        : "Enter message to decrypt...";
+    elements.outputText.placeholder = currentMode === 'encrypt'
+        ? "Encrypted message will appear here..."
+        : "Decrypted message will appear here...";
+    elements.chainDisplay.innerHTML = currentMode === 'encrypt'
+        ? "Encryption chain will appear here..."
+        : "Decryption chain will appear here...";
+    elements.copyButton.textContent = currentMode === 'encrypt'
+        ? "Copy Encrypted Message"
+        : "Copy Decrypted Message";
+    
+    updateTokenButtons();
+}
+
+// Update the references in your existing code
+function getCurrentMode() {
+    return currentMode;
+}
+
+// Update resetState function to handle the new toggle
+const originalResetState = resetState;
+function resetState() {
+    originalResetState();
+    currentMode = 'encrypt';
+    updateModeDisplay();
 }
 
 // Create Token functionality
@@ -913,6 +1006,11 @@ importTokenButton.addEventListener('click', () => {
     
     input.click();
 });
+
+// Update the references in your existing code
+function getCurrentMode() {
+    return currentMode;
+}
 
 // Basic encryption methods
 function caesarCipher(text, shift, decrypt = false) {
@@ -1218,7 +1316,7 @@ async function updateOutput() {
         return;
     }
 
-    const isEncrypt = elements.modeSelect.value === 'encrypt';
+    const isEncrypt = currentMode === 'encrypt';
     const chain = [];
 
     try {
@@ -1428,7 +1526,8 @@ function resetState() {
     elements.inputText.value = '';
     elements.outputText.value = '';
     elements.chainDisplay.innerHTML = 'Chain will appear here...';
-    elements.modeSelect.value = 'encrypt';
+    currentMode = 'encrypt';
+    updateModeDisplay();
 
 // Reset all checkboxes and inputs
 Object.values(encryptionMethods).forEach(element => {
@@ -1442,8 +1541,8 @@ Object.values(encryptionMethods).forEach(element => {
 });
 
 // Update counters and mode
-    updateCounters();
-    updateMode();
+updateCounters();
+updateModeDisplay();
 }
 
 function getCurrentConfig() {
