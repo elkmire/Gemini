@@ -682,7 +682,8 @@ button:focus {
     <div class="title">
         <span>G</span><span>E</span><span>M</span><span>I</span><span>N</span><span>I</span>
     </div>
-    <div class="developer-credit">developed by elkmire</div>
+	<div class="developer-credit">Secure Message Engine<br/>developed by elkmire</div>
+
     
     <div class="container">
         <div class="input-section">
@@ -698,14 +699,14 @@ button:focus {
                     <div class="mode-indicator"></div>
                 </button>
                 <div class="config-buttons">
-                    <button id="load-config">Load Config</button>
+                    <button id="load-config">Load Crypto</button>
                     <p>CHECK MODE</p>
-                    <button id="save-config">Save Config</button>
+                    <button id="save-config">Save Crypto</button>
                 </div>
             </div>
 
             <div class="group-box collapsed">
-                <h3>Basic <span class="toggle-icon">+</span></h3>
+                <h3>Entry <span class="toggle-icon">+</span></h3>
                 <div class="section-content">
                     <div class="cipher-input">
                         <div class="checkbox-container">
@@ -764,10 +765,6 @@ button:focus {
                     <div class="checkbox-container">
                         <input type="checkbox" id="base64-check">
                         <label for="base64-check">Base64</label>
-                    </div>
-                    <div class="checkbox-container">
-                        <input type="checkbox" id="base58-check">
-                        <label for="base58-check">Base58</label>
                     </div>
                     <div class="checkbox-container">
                         <input type="checkbox" id="base32-check">
@@ -871,7 +868,6 @@ button:focus {
         binary: document.getElementById('binary-check'),
         base85: document.getElementById('base85-check'),
         base64: document.getElementById('base64-check'),
-        base58: document.getElementById('base58-check'),
         base32: document.getElementById('base32-check'),
         hex: document.getElementById('hex-check'),
         aes: document.getElementById('aes-check'),
@@ -886,15 +882,6 @@ const SAFE_CHUNK_SIZE = 5000;   // 5KB chunks for stack-sensitive operations
 
 const createTokenButton = document.getElementById('create-token');
 const importTokenButton = document.getElementById('import-token');
-
-const progress = addProgressBar();
-window.updateProgress = (operation, value) => {
-    progress.show();
-    progress.update(value);
-    if (value >= 100) {
-        setTimeout(() => progress.hide(), 500);
-    }
-};
 
 
 
@@ -918,97 +905,27 @@ const morseCode = {
     
     // Punctuation
     '.': '.-.-.-', ',': '--..--', '?': '..--..',
-    '!': '-.-.--', '/': '-..-.',  '(': '-.--.',
-    ')': '-.--.-', '&': '.-...',  ':': '---...',
-    ';': '-.-.-.', '=': '-...-',  '+': '.-.-.',
-    '-': '-....-', '_': '..--.-', '"': '.-..-.',
-    '$': '...-..-','@': '.--.-.',
+    '!': '-.-.--', '/': '-..-.',  '': '-.--.',
+    '(': '-.--.', ')': '-.--.-', '&': '.-...', 
+    ':': '---...', ';': '-.-.-.', '=': '-...-', 
+    '+': '.-.-.', '-': '-....-', '_': '..--.-', 
+    '"': '.-..-.', '$': '...-..-', '@': '.--.-.',
     
     // Special characters
-    ' ': ' ',      // Space between words
+    ' ': '/',      // Space between words
     '\n': '\n',    // Newline
     '\r': '',      // Carriage return (ignored)
     '\t': ' '      // Tab (converted to space)
 };
 
-const reverseMorse = Object.fromEntries(
-    Object.entries(morseCode).map(([key, value]) => [value, key])
-);
+const reverseMorse = Object.fromEntries(Object.entries(morseCode).map(([key, value]) => [value, key]));
+
 
 // Base32 with proper padding and extended alphabet
 const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 const BASE32_MAPPING = Object.fromEntries(
     [...BASE32_ALPHABET].map((char, index) => [char, index])
 );
-
-// Base58 with improved binary data handling
-const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-const BASE58_MAPPING = Object.fromEntries(
-    [...BASE58_ALPHABET].map((char, index) => [char, index])
-);
-
-// Define incompatible methods mapping
-const INCOMPATIBLE_METHODS = {
-    'binary-check': 'Binary',
-    'hex-check': 'Hexadecimal',
-    'base32-check': 'Base32',
-    'base85-check': 'Base85'
-};
-
-// Updated compatibility check function
-function checkBase58Compatibility() {
-    const base58Checkbox = document.getElementById('base58-check');
-    
-    if (base58Checkbox.checked) {
-        // When Base58 is being checked, disable incompatible methods
-        for (const [id, name] of Object.entries(INCOMPATIBLE_METHODS)) {
-            const checkbox = document.getElementById(id);
-            checkbox.disabled = true;
-        }
-    } else {
-        // Enable all methods when Base58 is unchecked
-        for (const id of Object.keys(INCOMPATIBLE_METHODS)) {
-            const checkbox = document.getElementById(id);
-            checkbox.disabled = false;
-        }
-    }
-}
-
-// Initialize Base58 compatibility
-function initializeBase58Compatibility() {
-    // Event listeners for incompatible methods
-    for (const [id, name] of Object.entries(INCOMPATIBLE_METHODS)) {
-        document.getElementById(id).addEventListener('change', function() {
-            const base58Checkbox = document.getElementById('base58-check');
-            if (this.checked && base58Checkbox.checked) {
-                // If trying to check an incompatible method while Base58 is active
-                this.checked = false;
-                alert(`${name} encoding cannot be used while Base58 encoding is active. Please disable Base58 encoding first if you want to use ${name} encoding.`);
-                updateOutput();
-            }
-        });
-    }
-
-    // Base58 checkbox event listener
-    document.getElementById('base58-check').addEventListener('change', function() {
-        if (this.checked) {
-            // Check if any incompatible methods are already active
-            for (const [id, name] of Object.entries(INCOMPATIBLE_METHODS)) {
-                const checkbox = document.getElementById(id);
-                if (checkbox.checked) {
-                    // If an incompatible method is active, prevent Base58 from being checked
-                    this.checked = false;
-                    alert(`Base58 encoding cannot be enabled because ${name} encoding is already active. Please disable ${name} encoding first if you want to use Base58.`);
-                    return;
-                }
-            }
-        }
-        
-        // Update compatibility and UI
-        checkBase58Compatibility();
-        updateOutput();
-    });
-}
 
 // Event listeners (existing code continues here)
 elements.inputText.addEventListener('input', updateOutput);
@@ -1082,7 +999,6 @@ function getCurrentMode() {
 const originalResetState = resetState;
 function resetState() {
     originalResetState();
-    checkBase58Compatibility();
     currentMode = 'encrypt';
     updateModeDisplay();
 }
@@ -1126,35 +1042,6 @@ importTokenButton.addEventListener('click', () => {
     
     input.click();
 });
-
-function addProgressBar() {
-    const progressBar = document.createElement('div');
-    progressBar.id = 'progress-bar';
-    progressBar.style.cssText = `
-        width: 100%;
-        height: 4px;
-        background: #ddd;
-        margin: 10px 0;
-        display: none;
-    `;
-    
-    const progressIndicator = document.createElement('div');
-    progressIndicator.style.cssText = `
-        width: 0%;
-        height: 100%;
-        background: var(--primary-color);
-        transition: width 0.3s ease;
-    `;
-    progressBar.appendChild(progressIndicator);
-    
-    document.querySelector('.control-section').prepend(progressBar);
-    
-    return {
-        show: () => progressBar.style.display = 'block',
-        hide: () => progressBar.style.display = 'none',
-        update: (progress) => progressIndicator.style.width = `${progress}%`
-    };
-}
 
 function initializeCollapsibleSections() {
     const groupBoxes = document.querySelectorAll('.group-box');
@@ -1288,6 +1175,8 @@ function reverseText(text) {
 
 function morseEncode(text) {
     return text.toUpperCase()
+        .replace(/\t/g, ' ') // Replace tabs with spaces
+        .replace(/\r/g, '') // Remove carriage returns
         .split('')
         .map(char => morseCode[char] || char)
         .join(' ')
@@ -1296,7 +1185,7 @@ function morseEncode(text) {
 
 function morseDecode(text) {
     return text
-        .split('  ') // Split words
+        .split(' / ') // Split words
         .map(word => 
             word.split(' ')
                 .map(char => reverseMorse[char] || char)
@@ -1383,125 +1272,6 @@ function binaryDecode(text) {
     
     return new TextDecoder().decode(bytes);
 }
-
-function base58Encode(text) {
-    // Convert text to bytes using TextEncoder
-    const encoder = new TextEncoder();
-    const bytes = encoder.encode(text);
-    
-    // Count leading zeros
-    let zeros = 0;
-    while (zeros < bytes.length && bytes[zeros] === 0) {
-        zeros++;
-    }
-    
-    // Convert to big integer
-    let value = 0n;
-    for (let i = zeros; i < bytes.length; i++) {
-        value = value * 256n + BigInt(bytes[i]);
-    }
-    
-    // Convert to base58 string
-    let result = '';
-    while (value > 0n) {
-        const remainder = Number(value % 58n);
-        value = value / 58n;
-        result = BASE58_ALPHABET[remainder] + result;
-    }
-    
-    // Add leading '1's for zero bytes (1 is used as it's the first character in base58)
-    result = '1'.repeat(zeros) + result;
-    
-    return result || '1';
-}
-
-function base58Decode(text) {
-    try {
-        // Count and verify leading '1's
-        let zeros = 0;
-        for (let i = 0; i < text.length && text[i] === '1'; i++) {
-            zeros++;
-        }
-        
-        // Convert from base58 string to integer
-        let value = 0n;
-        for (const char of text.slice(zeros)) {
-            if (!(char in BASE58_MAPPING)) {
-                throw new Error(`Invalid Base58 character: ${char}`);
-            }
-            value = value * 58n + BigInt(BASE58_MAPPING[char]);
-        }
-        
-        // Convert to bytes
-        const bytes = [];
-        while (value > 0n) {
-            bytes.unshift(Number(value % 256n));
-            value = value / 256n;
-        }
-        
-        // Add leading zeros
-        for (let i = 0; i < zeros; i++) {
-            bytes.unshift(0);
-        }
-        
-        // Convert bytes back to text
-        return new TextDecoder().decode(new Uint8Array(bytes));
-    } catch (e) {
-        throw new Error('Invalid Base58 encoding: ' + e.message);
-    }
-}
-
-// Initialize Base58 compatibility
-function initializeBase58Compatibility() {
-    // Event listeners for incompatible methods
-    for (const [id, name] of Object.entries(INCOMPATIBLE_METHODS)) {
-        document.getElementById(id).addEventListener('change', function() {
-            const base58Checkbox = document.getElementById('base58-check');
-            if (this.checked && base58Checkbox.checked) {
-                // If trying to check an incompatible method while Base58 is active
-                this.checked = false;
-                alert(`${name} encoding cannot be used while Base58 encoding is active. Please disable Base58 encoding first if you want to use ${name} encoding.`);
-                updateOutput();
-            }
-        });
-    }
-
-    // Base58 checkbox event listener
-    document.getElementById('base58-check').addEventListener('change', function() {
-        if (this.checked) {
-            // Check if any incompatible methods are already active
-            for (const [id, name] of Object.entries(INCOMPATIBLE_METHODS)) {
-                const checkbox = document.getElementById(id);
-                if (checkbox.checked) {
-                    // If an incompatible method is active, prevent Base58 from being checked
-                    this.checked = false;
-                    alert(`Base58 encoding cannot be enabled because ${name} encoding is already active. Please disable ${name} encoding first if you want to use Base58.`);
-                    return;
-                }
-            }
-        }
-        
-        // Update compatibility and UI
-        checkBase58Compatibility();
-        updateOutput();
-    });
-}
-
-// Add checks for incompatible methods
-for (const [id, name] of Object.entries(INCOMPATIBLE_METHODS)) {
-    document.getElementById(id).addEventListener('change', function() {
-        const base58Checkbox = document.getElementById('base58-check');
-        if (this.checked && base58Checkbox.checked) {
-            base58Checkbox.checked = false;
-            alert(`Base58 encoding has been disabled because it cannot be combined with ${name} encoding.`);
-            // Re-enable all previously disabled methods
-            for (const otherId of Object.keys(INCOMPATIBLE_METHODS)) {
-                document.getElementById(otherId).disabled = false;
-            }
-        }
-    });
-}
-
 
 // Base85 (ASCII85) implementation
 function base85Encode(text) {
@@ -1751,7 +1521,7 @@ async function aesDecrypt(text, password) {
 }
 
 async function chachaEncrypt(text, password) {
-    // Note: This is a simplified version since ChaCha20-Poly1305 isn't directly available in CryptoJS
+    // Note: ChaCha20 will be implemented later
     if (!password) throw new Error('ChaCha password required');
     return aesEncrypt(text, password); // Fallback to AES for demo
 }
@@ -2199,12 +1969,6 @@ async function updateOutput() {
                 updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
             }
 
-            if (encryptionMethods.base58.checked) {
-                text = base58Encode(text);
-                chain.push('Base58 Encoding');
-                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
-            }
-
             if (encryptionMethods.base85.checked) {
                 text = base85Encode(text);
                 chain.push('Base85 Encoding');
@@ -2253,12 +2017,6 @@ async function updateOutput() {
             if (encryptionMethods.base85.checked) {
                 text = base85Decode(text);
                 chain.push('Base85 Decoding');
-                updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
-            }
-
-            if (encryptionMethods.base58.checked) {
-                text = base58Decode(text);
-                chain.push('Base58 Decoding');
                 updateProgressIfLarge(isLargeInput, ++currentOperation, totalOperations);
             }
 
@@ -2352,8 +2110,8 @@ async function updateOutput() {
         if (chain.length > 0) {
             const chainText = `${isEncrypt ? 'Encryption' : 'Decryption'} Chain:\n` +
                 chain.map((step, i) => `${i + 1}. ${step}`).join('\n') +
-                '\n\nNote: Methods are applied in ' + 
-                (isEncrypt ? 'forward' : 'reverse') + ' order for proper ' +
+                '\n\nNote: Applied in ' + 
+                (isEncrypt ? 'forward' : 'reverse') + ' order for ' +
                 (isEncrypt ? 'encryption' : 'decryption');
             elements.chainDisplay.innerHTML = chainText;
         } else {
@@ -2364,9 +2122,7 @@ async function updateOutput() {
         elements.outputText.value = `Error: ${e.message}`;
         elements.chainDisplay.innerHTML = 
             `Error occurred during ${isEncrypt ? 'encryption' : 'decryption'}:\n` +
-            `${e.message}\n\n` +
-            'Tip: When combining multiple methods, ensure they are compatible ' +
-            'and check that all required keys/parameters are provided.';
+            `${e.message}\n\n`;
     }
 
     if (isLargeInput) {
@@ -2434,7 +2190,6 @@ function getCurrentConfig() {
         binary: encryptionMethods.binary.checked,
         base85: encryptionMethods.base85.checked,
         base64: encryptionMethods.base64.checked,
-        base58: encryptionMethods.base58.checked,
         base32: encryptionMethods.base32.checked,
         hex: encryptionMethods.hex.checked,
         
@@ -2470,7 +2225,6 @@ function applyConfig(config) {
     encryptionMethods.binary.checked = config.binary;
     encryptionMethods.base85.checked = config.base85;
     encryptionMethods.base64.checked = config.base64;
-    encryptionMethods.base58.checked = config.base58;
     encryptionMethods.base32.checked = config.base32;
     encryptionMethods.hex.checked = config.hex;
     
@@ -2621,14 +2375,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize collapsible sections
     initializeCollapsibleSections();
     
-    // Initialize Base58 compatibility
-    initializeBase58Compatibility();
-    
     // Initialize the layout
     updateLayout();
-    
-    // Check initial Base58 compatibility state
-    checkBase58Compatibility();
     
     // Initial update of output
     updateOutput();
