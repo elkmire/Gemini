@@ -63,7 +63,6 @@ GEMINI is a browser-based cryptographic toolkit that combines classical ciphers,
 
 4. **Performance Features**:
    - Handles large texts through chunked processing
-   - Progress bar for lengthy operations
    - Automatic updates as you type (because waiting is so 20th century)
 
 ## Best Practices
@@ -99,7 +98,7 @@ Automatically matches your system preferences, because even cryptographers need 
 ## Remember
 * The security of your message is inversely proportional to your need to decrypt it later
 * All encryption is breakable given enough time, computing power, or determination
-* This tool is for educational purposes and casual use; for actual sensitive data, use established encryption tools
+* This tool is for educational purposes and personal use; for actual sensitive data, use established encryption tools
 * If you forget your password, that's entirely on you
 
 ## Easter Eggs
