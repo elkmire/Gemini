@@ -56,21 +56,20 @@ GEMINI is a browser-based cryptographic toolkit that combines classical ciphers,
    - Decryption: Bottom to top
    - Think of it like a cryptographic sandwich
 
-3. **Save/Load Configurations**:
-   - Save your favorite combination of methods
-   - Password-protected because trust issues are healthy in cryptography
+3. **Save/Load Keys**:
+   - Export configuration to disseminate to your cronies
+   - Password-protected , AES encrypted; because trust issues are healthy in cryptography
    - Export as `GEMINI-KEY.txt`
 
 4. **Performance Features**:
    - Handles large texts through chunked processing
-   - Automatic updates as you type (because waiting is so 20th century)
+   - Automatic updates as you type
 
 ## Best Practices
 
 1. **For Maximum Security**:
-   - Use AES-256 with a strong password
+   - Use AES-256 with a strong password (+12 chars, multi sign)
    - Combine with encoding methods for additional layers
-   - Don't use Caesar cipher (seriously, it's there for historical reasons)
 
 2. **For Maximum Confusion**:
    - Chain every single option
@@ -93,13 +92,13 @@ GEMINI is a browser-based cryptographic toolkit that combines classical ciphers,
 * Pull-to-refresh functionality (because sometimes you need a clean slate)
 
 ## Dark/Light Mode
-Automatically matches your system preferences, because even cryptographers need proper contrast ratios.
+Automatically matches your system preferences, because cryptographers need proper contrast ratios.
 
 ## Remember
 * The security of your message is inversely proportional to your need to decrypt it later
 * All encryption is breakable given enough time, computing power, or determination
-* This tool is for educational purposes and personal use; for actual sensitive data, use established encryption tools
-* If you forget your password, that's entirely on you
+* This tool is for educational purposes and personal use; for proffesionally-sensitive data, use established encryption tools
+* If you forget your password, get crackin'
 
 ## Easter Eggs
 There aren't any. Or are there? You'll need to decrypt that information yourself.
