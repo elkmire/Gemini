@@ -14,7 +14,6 @@ GEMINI is a browser-based cryptographic toolkit that combines classical ciphers,
 ### 1. Entry Methods
 * **Caesar Cipher**: The OG of encryption. If it was good enough for Julius Caesar, it's good enough for your lunch plans.
   - Customizable shift value (default: 3)
-  - Pro tip: Use 13 for ROT13, or don't because there's a separate button for that
 
 * **Vigenère Cipher**: Like Caesar cipher, but it went to college.
   - Requires a key word/phrase
