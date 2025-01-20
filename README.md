@@ -2,7 +2,8 @@
 # [Gemini](https://elkmire.github.io/Gemini/ "Gemini Web Version") <- Click Here
 
 *Because sometimes you want your messages to be as incomprehensible as your worklife*
-![Gemini](https://github.com/user-attachments/assets/b0a95755-cc50-4d44-bbfb-bfd6decf4398)
+![Gemini](https://github.com/user-attachments/assets/8f653efd-dfdc-45af-b99f-729fe6c57576)
+
 
 
 ## Overview
