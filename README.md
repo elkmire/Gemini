@@ -20,8 +20,6 @@ GEMINI is a browser-based cryptographic toolkit that combines classical ciphers,
   - Requires a key word/phrase
   - Case-insensitive, non-alpha characters are preserved
 
-* **ROT13**: For when you want to hide spoilers with the cryptographic equivalent of wearing sunglasses at night.
-
 * **Atbash**: Reverses the alphabet. A becomes Z, B becomes Y, etc. It's like alphabet yoga.
 
 * **Reverse**: Literally just reverses the text. Not encryption, but surprisingly effective against lazy adversaries.
