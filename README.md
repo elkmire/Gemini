@@ -2,7 +2,8 @@
 # [Gemini](https://elkmire.github.io/Gemini/ "Gemini Web Version") <- Click Here
 
 *Because sometimes you want your messages to be as incomprehensible as your worklife*
-![gemini](https://github.com/user-attachments/assets/e3b7e3a4-1380-4e54-bf84-183c4c435019)
+![Gemini](https://github.com/user-attachments/assets/b0a95755-cc50-4d44-bbfb-bfd6decf4398)
+
 
 ## Overview
 GEMINI is a browser-based cryptographic toolkit that combines classical ciphers, modern encryption, and various encoding methods. Think of it as a digital Enigma machine that had a wild night out with modern web standards.
