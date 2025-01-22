@@ -23,7 +23,7 @@ GEMINI is a browser-based cryptographic toolkit that combines classical ciphers,
 
 * **Reverse**: Literally just reverses the text. Not encryption, but surprisingly effective against lazy adversaries.
 
-* **Morse Code**: Because sometimes you want to communicate like it's 1844.
+* **Morse Code**: Because sometimes this is the way.
 
 ### 2. Encoding Methods
 * **URL Encoding**: Turns spaces into %20s and makes your text URL-safe. Perfect for when your message needs to travel the information superhighway.
@@ -41,33 +41,41 @@ GEMINI is a browser-based cryptographic toolkit that combines classical ciphers,
 * **Hex**: Converts text to hexadecimal. Because sometimes you want your message to look like a memory dump.
 
 ### 3. Encryption
-* **AES-256**: Military-grade encryption for your cat memes.
-  - Requires a password
-  - Uses CBC mode with PKCS7 padding
-  - Includes salt and IV for maximum security
+* **AES-GCM**: The Fort Knox of encryption for your cat memes.
+  - Requires a password (make it stronger than "password123")
+  - Uses GCM mode - because authenticity is cool like that
+  - Packs salt, nonce, and auth tag into one secure burrito
+  - So secure, even your messages don't know what they say
+  - NSA-approved, cat-meme-certified 🔐
+
+The authenticated encryption means your message can't be tampered with. Like having a bouncer for your data! 🚫
 
 ## Usage Tips
-
 1. **Mode Toggle**: Switch between encryption and decryption with the big button at the top. It's color-coded because cryptographers need visual aids too.
-
 2. **Chaining Operations**: Operations are applied in sequence:
    - Encryption: Top to bottom
    - Decryption: Bottom to top
    - Think of it like a cryptographic sandwich
-
+     
 3. **Save/Load Keys**:
    - Export configuration to disseminate to your cronies
    - Password-protected , AES encrypted; because trust issues are healthy in cryptography
-   - Export as `GEMINI-KEY.txt`
-
+   - Export as `gemini-XXX.cyp`
+     
 4. **Performance Features**:
    - Handles large texts through chunked processing
    - Automatic updates as you type
+     
+5. **Token System**:
+   - Export encrypted messages as `.tok` files (think of them as fancy cryptographic postcards)
+   - Import tokens in decrypt mode to automagically load the encrypted message
+   - Files are named `geminiXXX.tok` with XXX replaces with random numbers.
+   - Perfect for when you want to send secrets but email is too mainstream
 
 ## Best Practices
 
 1. **For Maximum Security**:
-   - Use AES-256 with a strong password (+12 chars, multi sign)
+   - Use AES-GCM with a strong password (+12 chars, multi sign)
    - Combine with encoding methods for additional layers
 
 2. **For Maximum Confusion**:
@@ -81,14 +89,12 @@ GEMINI is a browser-based cryptographic toolkit that combines classical ciphers,
    - Don't forget your passwords
 
 ## Error Handling
-* Invalid Base64? It will let you know.
-* Wrong AES password? It will let you know.
+* It tells you.
 * Life choices? You're on your own.
 
 ## Mobile Support
 * Responsive design
-* Touch-friendly controls
-* Pull-to-refresh functionality (because sometimes you need a clean slate)
+* Touch semi-friendly controls
 
 ## Dark/Light Mode
 Automatically matches your system preferences, because cryptographers need proper contrast ratios.
